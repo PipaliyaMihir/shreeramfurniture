@@ -1,4 +1,11 @@
-import { Facebook, Instagram, Twitter, Youtube, Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
+import { Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
+
+const socialLinks = [
+  { label: 'f', name: 'Facebook', href: '#' },
+  { label: '📷', name: 'Instagram', href: '#' },
+  { label: '𝕏', name: 'Twitter', href: '#' },
+  { label: '▶', name: 'YouTube', href: '#' },
+];
 
 const footerLinks = {
   'Quick Links': ['Home', 'Products', 'About Us', 'Contact'],
@@ -69,18 +76,14 @@ export default function Footer() {
 
             {/* Social */}
             <div className="flex gap-3 mt-6">
-              {[
-                { icon: Facebook, href: '#' },
-                { icon: Instagram, href: '#' },
-                { icon: Twitter, href: '#' },
-                { icon: Youtube, href: '#' },
-              ].map(({ icon: Icon, href }) => (
+              {socialLinks.map(({ label, name, href }) => (
                 <a
-                  key={href}
+                  key={name}
                   href={href}
-                  className="w-9 h-9 bg-white/10 hover:bg-primary-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5"
+                  title={name}
+                  className="w-9 h-9 bg-white/10 hover:bg-primary-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 text-sm font-bold"
                 >
-                  <Icon size={16} />
+                  {label}
                 </a>
               ))}
             </div>
