@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Test — Shree Ram Furniture</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 30px; }
+    h1 { color: #d4852a; font-size: 24px; margin-bottom: 6px; }
+    p { color: #888; margin-bottom: 30px; font-size: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .card { background: #16213e; border: 1px solid #0f3460; border-radius: 12px; padding: 20px; }
+    .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #ccc; }
+    .result { background: #0a0a1a; border-radius: 8px; padding: 12px; min-height: 60px; font-size: 12px; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+    .status { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+    .ok { background: #063; color: #6f6; }
+    .fail { background: #600; color: #f66; }
+    .pending { background: #333; color: #aaa; }
+    button { margin-top: 20px; padding: 10px 24px; background: #d4852a; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    button:hover { background: #b86b1e; }
+    .links { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .links a { padding: 10px 20px; background: #0f3460; color: #6af; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; }
+    .links a:hover { background: #1a5276; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Shree Ram Furniture — API Test</h1>
+  <p>Click "Run All Tests" to verify everything is working</p>
+
+  <div class="grid" id="tests"></div>
+
+  <button onclick="runTests()">▶ Run All Tests</button>
+
+  <div class="links">
+    <a href="http://localhost:3000" target="_blank">🌐 Open Website</a>
+    <a href="http://localhost:3000/admin/login" target="_blank">🔐 Admin Login</a>
+    <a href="http://localhost:5000/api/health" target="_blank">💚 API Health</a>
+    <a href="http://localhost:5000/api/products" target="_blank">📦 Products API</a>
+    <a href="http://localhost:5000/api/categories" target="_blank">🏷️ Categories API</a>
+  </div>
+
+  <script>
+    const tests = [
+      { id: 'health', label: '💚 API Health Check', url: 'http://localhost:5000/api/health', method: 'GET' },
+      { id: 'categories', label: '🏷️ Get Categories', url: 'http://localhost:5000/api/categories', method: 'GET' },
+      { id: 'products', label: '📦 Get Products', url: 'http://localhost:5000/api/products', method: 'GET' },
+      { id: 'hero', label: '🖼️ Get Hero Slides', url: 'http://localhost:5000/api/hero', method: 'GET' },
+      { id: 'login', label: '🔐 Admin Login', url: 'http://localhost:5000/api/auth/login', method: 'POST', body: { email: 'admin@shreeramfurniture.com', password: 'Admin@123' } },
+    ];
+
+    function render() {
+      document.getElementById('tests').innerHTML = tests.map(t => `
+        <div class="card">
+          <h3>${t.label}</h3>
+          <span class="status pending" id="status-${t.id}">PENDING</span>
+          <div class="result" id="result-${t.id}">Not run yet...</div>
+        </div>
+      `).join('');
+    }
+
+    async function runTests() {
+      for (const t of tests) {
+        const statusEl = document.getElementById('status-' + t.id);
+        const resultEl = document.getElementById('result-' + t.id);
+        statusEl.textContent = 'RUNNING...';
+        statusEl.className = 'status pending';
+        try {
+          const opts = { method: t.method, headers: { 'Content-Type': 'application/json' } };
+          if (t.body) opts.body = JSON.stringify(t.body);
+          const res = await fetch(t.url, opts);
+          const data = await res.json();
+          if (res.ok) {
+            statusEl.textContent = '✅ OK ' + res.status;
+            statusEl.className = 'status ok';
+            if (Array.isArray(data)) {
+              resultEl.textContent = `Found ${data.length} items\n` + JSON.stringify(data[0] || {}, null, 2).slice(0, 300);
+            } else if (data.token) {
+              resultEl.textContent = `Login SUCCESS!\nUser: ${data.name}\nToken: ${data.token.slice(0, 30)}...`;
+            } else {
+              resultEl.textContent = JSON.stringify(data, null, 2).slice(0, 400);
+            }
+          } else {
+            statusEl.textContent = '❌ FAIL ' + res.status;
+            statusEl.className = 'status fail';
+            resultEl.textContent = JSON.stringify(data, null, 2);
+          }
+        } catch (e) {
+          statusEl.textContent = '❌ ERROR';
+          statusEl.className = 'status fail';
+          resultEl.textContent = 'Error: ' + e.message + '\n\nMake sure:\n1. Backend is running (node index.js)\n2. Port 5000 is not blocked\n3. MongoDB IP is whitelisted in Atlas';
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>

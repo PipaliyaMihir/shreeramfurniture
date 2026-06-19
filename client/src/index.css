@@ -109,40 +109,6 @@
   }
 }
 
-/* Slick slider overrides */
-.slick-prev, .slick-next {
-  z-index: 10;
-  width: 48px;
-  height: 48px;
-}
-
-.slick-prev { left: 20px; }
-.slick-next { right: 20px; }
-
-.slick-prev::before, .slick-next::before {
-  font-size: 24px;
-  color: white;
-  opacity: 0.9;
-}
-
-.slick-dots li button::before {
-  color: white;
-  opacity: 0.6;
-  font-size: 10px;
-}
-
-.slick-dots li.slick-active button::before {
-  color: #d4852a;
-  opacity: 1;
-}
-
-/* Hero slider */
-.hero-slide {
-  position: relative;
-  height: 100vh;
-  min-height: 600px;
-}
-
 /* Animations */
 @keyframes gradient-shift {
   0% { background-position: 0% 50%; }
