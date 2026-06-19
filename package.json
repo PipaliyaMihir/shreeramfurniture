@@ -1,0 +1,24 @@
+{
+  "name": "shreeramfurniture",
+  "version": "1.0.0",
+  "description": "Shree Ram Furniture - Full Stack Website",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && node index.js",
+    "client": "cd client && npm run dev",
+    "seed": "cd server && node seeder.js",
+    "build": "cd client && npm run build",
+    "start": "cd server && node index.js"
+  },
+  "keywords": [
+    "furniture",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "Shree Ram Furniture",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
