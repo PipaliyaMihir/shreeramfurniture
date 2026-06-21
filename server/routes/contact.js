@@ -127,8 +127,18 @@ router.post('/quotation', async (req, res) => {
       });
     }
 
+    // Personalize email body with client name
+    let personalizedBody = config.body || '';
+    if (personalizedBody.includes('{name}')) {
+      personalizedBody = personalizedBody.replace(/{name}/g, name);
+    } else if (personalizedBody.includes('Hello,')) {
+      personalizedBody = personalizedBody.replace('Hello,', `Hello ${name},`);
+    } else if (personalizedBody.includes('Hello')) {
+      personalizedBody = personalizedBody.replace('Hello', `Hello ${name}`);
+    }
+
     // Send email in the background
-    sendAutomatedEmail(email, config.subject, config.body, config.pdfUrl)
+    sendAutomatedEmail(email, config.subject, personalizedBody, config.pdfUrl)
       .catch(err => console.error('Error sending auto-reply email:', err));
 
     res.status(201).json({ message: 'Quotation request submitted successfully!', quotation });
