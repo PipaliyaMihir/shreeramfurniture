@@ -969,37 +969,37 @@ function QuotationModal({ quotation, onClose }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="modal-content text-left bg-dark-800 border-dark-600/35 max-w-lg w-full"
+        className="modal-content text-left bg-dark-800 border border-white/10 max-w-lg w-full p-6 space-y-6"
       >
-        <div className="flex items-center justify-between p-6 border-b border-dark-600/10">
-          <h2 className="font-display text-xl font-bold text-dark-400">
+        <div className="flex items-center justify-between pb-4 border-b border-white/10">
+          <h2 className="font-display text-xl font-bold text-white">
             Quotation Request Details
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-dark-600/30 text-gray-500 hover:text-dark-400 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Client Name</label>
-            <p className="text-sm font-semibold text-white bg-dark-900 px-4 py-2.5 rounded-xl border border-dark-600/15">{quotation.name}</p>
+            <label className="block text-xs font-bold text-gold-400 uppercase tracking-wider mb-1.5">Client Name</label>
+            <p className="text-sm font-semibold text-white bg-dark-900/60 px-4 py-3 rounded-xl border border-white/10">{quotation.name}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
-              <a href={`mailto:${quotation.email}`} className="block text-sm font-semibold text-gold-400 hover:text-gold-300 transition-colors bg-dark-900 px-4 py-2.5 rounded-xl border border-dark-600/15 truncate block">{quotation.email}</a>
+              <label className="block text-xs font-bold text-gold-400 uppercase tracking-wider mb-1.5">Email Address</label>
+              <a href={`mailto:${quotation.email}`} className="block text-sm font-semibold text-gold-400 hover:text-gold-300 transition-colors bg-dark-900/60 px-4 py-3 rounded-xl border border-white/10 truncate block">{quotation.email}</a>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Phone Number</label>
-              <a href={quotation.phone ? `tel:${quotation.phone}` : '#'} className="block text-sm font-semibold text-white bg-dark-900 px-4 py-2.5 rounded-xl border border-dark-600/15 block">{quotation.phone || '—'}</a>
+              <label className="block text-xs font-bold text-gold-400 uppercase tracking-wider mb-1.5">Phone Number</label>
+              <a href={quotation.phone ? `tel:${quotation.phone}` : '#'} className="block text-sm font-semibold text-white bg-dark-900/60 px-4 py-3 rounded-xl border border-white/10 block">{quotation.phone || '—'}</a>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Submitted Date</label>
-            <p className="text-sm font-semibold text-white bg-dark-900 px-4 py-2.5 rounded-xl border border-dark-600/15">
+            <label className="block text-xs font-bold text-gold-400 uppercase tracking-wider mb-1.5">Submitted Date</label>
+            <p className="text-sm font-semibold text-white bg-dark-900/60 px-4 py-3 rounded-xl border border-white/10">
               {new Date(quotation.createdAt).toLocaleDateString('en-IN', {
                 year: 'numeric',
                 month: 'long',
@@ -1011,15 +1011,15 @@ function QuotationModal({ quotation, onClose }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Message / Requirements</label>
-            <div className="text-sm text-gray-300 bg-dark-900 px-4 py-3.5 rounded-xl border border-dark-600/15 min-h-[120px] whitespace-pre-line leading-relaxed">
+            <label className="block text-xs font-bold text-gold-400 uppercase tracking-wider mb-1.5">Message / Requirements</label>
+            <div className="text-sm text-gray-200 bg-dark-900/60 px-4 py-3 rounded-xl border border-white/10 min-h-[120px] whitespace-pre-line leading-relaxed">
               {quotation.message}
             </div>
           </div>
         </div>
 
-        <div className="flex gap-3 p-6 border-t border-dark-600/15 bg-dark-900/40">
-          <button type="button" onClick={onClose} className="btn-outline flex-1 justify-center py-2.5">Close</button>
+        <div className="flex gap-3 pt-4 border-t border-white/10 bg-dark-800">
+          <button type="button" onClick={onClose} className="btn-primary w-full justify-center py-2.5">Close</button>
         </div>
       </motion.div>
     </div>
