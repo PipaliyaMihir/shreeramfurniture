@@ -1,0 +1,149 @@
+[
+  {
+    "name": "Shivalik Showroom (Gota)",
+    "description": "High-end retail showroom carpentry layout containing customized product display racks, display cabinetry, and a large wooden reception desk counter.",
+    "categories": [
+      {
+        "name": "TV Unit",
+        "images": [
+          "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80"
+        ]
+      },
+      {
+        "name": "Dining",
+        "images": [
+          "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80"
+        ]
+      }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80"
+    ],
+    "featured": false,
+    "rating": 4.6,
+    "reviewCount": 19,
+    "price": 0,
+    "originalPrice": 0
+  },
+  {
+    "_id": "6a353ffbe3c3d26bbb07f686",
+    "createdAt": "2026-06-19T13:11:23.570Z",
+    "updatedAt": "2026-06-20T05:12:15.903Z",
+    "name": "Nand Prime",
+    "description": "This is Our site that is recently complate",
+    "categories": [
+      {
+        "name": "Bedroom",
+        "images": [
+          "/uploads/1781874681458-479427061.jpg",
+          "/uploads/1781875475660-240213649.jpg",
+          "/uploads/1781875475689-57465054.jpg",
+          "/uploads/1781875476649-42977717.jpg",
+          "/uploads/1781875477707-555612152.jpg",
+          "/uploads/1781875477789-665661715.jpg",
+          "/uploads/1781875477797-590263808.jpg",
+          "/uploads/1781875477803-778534887.jpg"
+        ]
+      },
+      {
+        "name": "Living Area",
+        "images": [
+          "/uploads/1781874681458-479427061.jpg",
+          "/uploads/1781875475660-240213649.jpg",
+          "/uploads/1781875475689-57465054.jpg",
+          "/uploads/1781875476649-42977717.jpg",
+          "/uploads/1781875477707-555612152.jpg",
+          "/uploads/1781875477789-665661715.jpg",
+          "/uploads/1781875477797-590263808.jpg",
+          "/uploads/1781875477803-778534887.jpg"
+        ]
+      },
+      {
+        "name": "Dining",
+        "images": [
+          "/uploads/1781874681458-479427061.jpg",
+          "/uploads/1781875475660-240213649.jpg",
+          "/uploads/1781875475689-57465054.jpg",
+          "/uploads/1781875476649-42977717.jpg",
+          "/uploads/1781875477707-555612152.jpg",
+          "/uploads/1781875477789-665661715.jpg",
+          "/uploads/1781875477797-590263808.jpg",
+          "/uploads/1781875477803-778534887.jpg"
+        ]
+      },
+      {
+        "name": "Office",
+        "images": [
+          "/uploads/1781874681458-479427061.jpg",
+          "/uploads/1781875475660-240213649.jpg",
+          "/uploads/1781875475689-57465054.jpg",
+          "/uploads/1781875476649-42977717.jpg",
+          "/uploads/1781875477707-555612152.jpg",
+          "/uploads/1781875477789-665661715.jpg",
+          "/uploads/1781875477797-590263808.jpg",
+          "/uploads/1781875477803-778534887.jpg"
+        ]
+      },
+      {
+        "name": "Kitchen",
+        "images": [
+          "/uploads/1781874681458-479427061.jpg",
+          "/uploads/1781875475660-240213649.jpg",
+          "/uploads/1781875475689-57465054.jpg",
+          "/uploads/1781875476649-42977717.jpg",
+          "/uploads/1781875477707-555612152.jpg",
+          "/uploads/1781875477789-665661715.jpg",
+          "/uploads/1781875477797-590263808.jpg",
+          "/uploads/1781875477803-778534887.jpg"
+        ]
+      }
+    ],
+    "featured": true,
+    "price": 0,
+    "originalPrice": 0,
+    "inStock": true,
+    "images": [
+      "/uploads/1781874681458-479427061.jpg",
+      "/uploads/1781875475660-240213649.jpg",
+      "/uploads/1781875475689-57465054.jpg",
+      "/uploads/1781875476649-42977717.jpg",
+      "/uploads/1781875477707-555612152.jpg",
+      "/uploads/1781875477789-665661715.jpg",
+      "/uploads/1781875477797-590263808.jpg",
+      "/uploads/1781875477803-778534887.jpg",
+      "/uploads/1781874681458-479427061.jpg",
+      "/uploads/1781875475660-240213649.jpg",
+      "/uploads/1781875475689-57465054.jpg",
+      "/uploads/1781875476649-42977717.jpg",
+      "/uploads/1781875477707-555612152.jpg",
+      "/uploads/1781875477789-665661715.jpg",
+      "/uploads/1781875477797-590263808.jpg",
+      "/uploads/1781875477803-778534887.jpg",
+      "/uploads/1781874681458-479427061.jpg",
+      "/uploads/1781875475660-240213649.jpg",
+      "/uploads/1781875475689-57465054.jpg",
+      "/uploads/1781875476649-42977717.jpg",
+      "/uploads/1781875477707-555612152.jpg",
+      "/uploads/1781875477789-665661715.jpg",
+      "/uploads/1781875477797-590263808.jpg",
+      "/uploads/1781875477803-778534887.jpg",
+      "/uploads/1781874681458-479427061.jpg",
+      "/uploads/1781875475660-240213649.jpg",
+      "/uploads/1781875475689-57465054.jpg",
+      "/uploads/1781875476649-42977717.jpg",
+      "/uploads/1781875477707-555612152.jpg",
+      "/uploads/1781875477789-665661715.jpg",
+      "/uploads/1781875477797-590263808.jpg",
+      "/uploads/1781875477803-778534887.jpg",
+      "/uploads/1781874681458-479427061.jpg",
+      "/uploads/1781875475660-240213649.jpg",
+      "/uploads/1781875475689-57465054.jpg",
+      "/uploads/1781875476649-42977717.jpg",
+      "/uploads/1781875477707-555612152.jpg",
+      "/uploads/1781875477789-665661715.jpg",
+      "/uploads/1781875477797-590263808.jpg",
+      "/uploads/1781875477803-778534887.jpg"
+    ]
+  }
+]

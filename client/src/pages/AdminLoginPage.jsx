@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, LogIn, ShieldCheck } from 'lucide-react';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminLoginPage() {
@@ -28,9 +28,21 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-charcoal via-wood-deep to-charcoal flex items-center justify-center p-4">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5 bg-wood-grain bg-wood-texture" />
+    <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4 relative overflow-hidden">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#1a1a24',
+            color: '#e5e5e5',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '12px',
+          },
+        }}
+      />
+
+      {/* Background glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gold-400/[0.04] rounded-full blur-[120px] pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -39,9 +51,9 @@ export default function AdminLoginPage() {
         className="relative w-full max-w-md"
       >
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="bg-dark-800 border border-white/[0.08] rounded-3xl shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary-600 to-wood-mid p-8 text-center">
+          <div className="bg-gradient-to-r from-gold-500 to-gold-700 p-8 text-center">
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30">
               <ShieldCheck size={32} className="text-white" />
             </div>
@@ -53,9 +65,14 @@ export default function AdminLoginPage() {
           <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  Email Address
+                </label>
                 <div className="relative">
-                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Mail
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
+                  />
                   <input
                     id="admin-email"
                     type="email"
@@ -69,9 +86,12 @@ export default function AdminLoginPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
                 <div className="relative">
-                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Lock
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
+                  />
                   <input
                     id="admin-password"
                     type={showPass ? 'text' : 'password'}
@@ -84,18 +104,14 @@ export default function AdminLoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPass(!showPass)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
                   >
                     {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                <p className="text-xs text-amber-700 font-medium">
-                  Default credentials: admin@shreeramfurniture.com / Admin@123
-                </p>
-              </div>
+
 
               <button
                 type="submit"
@@ -103,20 +119,28 @@ export default function AdminLoginPage() {
                 className="w-full btn-primary justify-center py-4 text-base disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Signing in...</>
+                  <>
+                    <div className="w-5 h-5 border-2 border-dark-900 border-t-transparent rounded-full animate-spin" />
+                    Signing in...
+                  </>
                 ) : (
-                  <><LogIn size={18} /> Sign In</>
+                  <>
+                    <LogIn size={18} />
+                    Sign In
+                  </>
                 )}
               </button>
             </form>
 
-            <p className="text-center text-gray-400 text-sm mt-6">
-              <a href="/" className="text-primary-600 hover:underline font-medium">← Back to Website</a>
+            <p className="text-center text-gray-500 text-sm mt-6">
+              <a href="/" className="text-gold-400 hover:text-gold-300 transition-colors font-medium">
+                ← Back to Website
+              </a>
             </p>
           </div>
         </div>
 
-        <p className="text-center text-white/40 text-xs mt-6">
+        <p className="text-center text-gray-600 text-xs mt-6">
           © 2024 Shree Ram Furniture. Admin Panel.
         </p>
       </motion.div>

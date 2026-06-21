@@ -1,148 +1,174 @@
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Award, Users, Clock, Heart, CheckCircle, Star } from 'lucide-react';
+import { Check, Star, Award, Users, Building2, Layers } from 'lucide-react';
 
-const features = [
-  { icon: Award, title: 'Premium Quality', desc: 'Each piece is crafted from the finest wood by master artisans with decades of experience.' },
-  { icon: Clock, title: '15+ Years Experience', desc: 'Trusted by thousands of families since 2009 with unmatched craftsmanship.' },
-  { icon: Users, title: '10,000+ Happy Clients', desc: 'Our family of satisfied customers keeps growing every year across India.' },
-  { icon: Heart, title: 'Made with Love', desc: 'Every piece is built with passion, care, and attention to the finest details.' },
+const IMAGES = [
+  'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=600&q=80',
+  'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&q=80',
+  'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=600&q=80',
+  'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=600&q=80',
 ];
 
-const stats = [
-  { value: '500+', label: 'Products' },
-  { value: '10K+', label: 'Clients' },
-  { value: '15+', label: 'Years' },
-  { value: '50+', label: 'Artisans' },
+const FEATURES = [
+  'Custom On-Site Carpentry',
+  'Modular Kitchen Specialists',
+  'Custom Furniture Design',
+  'On-Time Project Delivery',
 ];
+
+const STATS = [
+  { value: '150+', label: 'Completed Sites', icon: Building2 },
+  { value: '8+', label: 'Years Experience', icon: Award },
+  { value: '500+', label: 'Happy Families', icon: Users },
+  { value: '6', label: 'Service Categories', icon: Layers },
+];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.6, ease: 'easeOut' },
+  }),
+};
 
 export default function AboutSection() {
   return (
-    <section id="about" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Images */}
+    <section id="about" className="relative overflow-hidden bg-dark-900 py-24 lg:py-32">
+      {/* Decorative background glow */}
+      <div className="pointer-events-none absolute -left-40 top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full bg-gold-400/5 blur-[120px]" />
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-20">
+          {/* ── Left: Image collage ── */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
             className="relative"
           >
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div className="overflow-hidden rounded-2xl shadow-lg">
-                  <img
-                    src="https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400&q=80"
-                    alt="Craftsman working"
-                    className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="overflow-hidden rounded-2xl shadow-lg">
-                  <img
-                    src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=400&q=80"
-                    alt="Furniture showroom"
-                    className="w-full h-56 object-cover hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-              </div>
-              <div className="space-y-4 mt-8">
-                <div className="overflow-hidden rounded-2xl shadow-lg">
-                  <img
-                    src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80"
-                    alt="Premium sofa"
-                    className="w-full h-56 object-cover hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="overflow-hidden rounded-2xl shadow-lg">
-                  <img
-                    src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400&q=80"
-                    alt="Wood detail"
-                    className="w-full h-48 object-cover hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Floating card */}
-            <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              className="absolute -bottom-6 -right-4 bg-white rounded-2xl shadow-wood-lg p-4 border border-primary-100"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Star className="text-amber-500 fill-amber-500" size={20} />
-                </div>
-                <div>
-                  <p className="font-bold text-gray-800">4.9 / 5.0</p>
-                  <p className="text-xs text-gray-400">Customer Rating</p>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Content */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-widest mb-3">
-              About Us
-            </span>
-            <h2 className="section-title mb-6">
-              Crafting Furniture<br />
-              <span className="text-gradient">Since 2009</span>
-            </h2>
-            <p className="text-gray-600 text-lg leading-relaxed mb-6">
-              At <strong>Shree Ram Furniture</strong>, we believe that furniture is more than just functional — it's an expression of your personality and a legacy you leave for generations. Every piece we craft tells a story of skill, passion, and dedication.
-            </p>
-            <p className="text-gray-500 leading-relaxed mb-8">
-              Using premium Sheesham, Teak, and Mango wood sourced responsibly, our master artisans blend traditional Indian craftsmanship with modern designs to create furniture that is both timeless and durable.
-            </p>
-
-            {/* Checklist */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-              {['100% Solid Wood', 'Custom Designs', 'Free Delivery', '5-Year Warranty', 'Expert Installation', 'EMI Available'].map((item) => (
-                <div key={item} className="flex items-center gap-2 text-gray-700">
-                  <CheckCircle size={16} className="text-primary-500 flex-shrink-0" />
-                  <span className="text-sm font-medium">{item}</span>
-                </div>
+              {IMAGES.map((src, idx) => (
+                <motion.div
+                  key={idx}
+                  custom={idx}
+                  variants={fadeUp}
+                  className={`group overflow-hidden rounded-2xl ${
+                    idx === 1 ? 'mt-8' : idx === 2 ? '-mt-8' : ''
+                  }`}
+                >
+                  <div className="overflow-hidden rounded-2xl">
+                    <img
+                      src={src}
+                      alt={`Furniture project ${idx + 1}`}
+                      className="aspect-[4/5] w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                  </div>
+                </motion.div>
               ))}
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-4 gap-4 p-6 bg-gradient-to-r from-primary-50 to-amber-50 rounded-2xl border border-primary-100">
-              {stats.map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <p className="text-2xl font-bold text-gradient font-display">{stat.value}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
-          {features.map((feat, idx) => (
+            {/* Floating rating card */}
             <motion.div
-              key={feat.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="text-center p-6 rounded-2xl bg-white border border-gray-100 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
+              transition={{ delay: 0.5, duration: 0.5, ease: 'easeOut' }}
+              className="absolute -bottom-6 -right-4 z-10 rounded-2xl border border-white/[0.06] bg-dark-800/90 px-6 py-5 shadow-2xl backdrop-blur-md sm:-right-6 lg:-right-8"
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <feat.icon size={24} className="text-primary-600" />
+              <div className="flex items-center gap-1 text-gold-400">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-gold-400" />
+                ))}
               </div>
-              <h3 className="font-bold text-gray-800 mb-2">{feat.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{feat.desc}</p>
+              <p className="mt-2 font-display text-2xl font-bold text-dark-400">
+                4.9<span className="text-base font-normal text-gray-400">/5.0</span>
+              </p>
+              <p className="mt-0.5 text-xs text-gray-500">Client Satisfaction</p>
             </motion.div>
-          ))}
+          </motion.div>
+
+          {/* ── Right: Text content ── */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+          >
+            <motion.span custom={0} variants={fadeUp} className="section-label">
+              About Us
+            </motion.span>
+
+            <motion.h2 custom={1} variants={fadeUp} className="section-title mt-3">
+              Bespoke On-Site Furniture Since&nbsp;2016
+            </motion.h2>
+
+            <motion.p custom={2} variants={fadeUp} className="section-subtitle mt-5 max-w-lg">
+              We are a dedicated team of highly skilled carpenters delivering premium 
+              custom furniture and carpentry for homes, offices, and showrooms. 
+              Every project we undertake reflects our commitment to quality craftsmanship, 
+              durable structure, and meticulous attention to detail — from modular kitchens 
+              and wardrobes to bespoke workspace units.
+            </motion.p>
+
+            {/* Feature checklist */}
+            <motion.ul
+              custom={3}
+              variants={fadeUp}
+              className="mt-8 grid gap-3 sm:grid-cols-2"
+            >
+              {FEATURES.map((feat, idx) => (
+                <motion.li
+                  key={feat}
+                  custom={4 + idx}
+                  variants={fadeUp}
+                  className="flex items-center gap-3"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold-400/10">
+                    <Check className="h-4 w-4 text-gold-400" />
+                  </span>
+                  <span className="text-sm font-medium text-gray-300">{feat}</span>
+                </motion.li>
+              ))}
+            </motion.ul>
+
+            {/* Divider */}
+            <div className="mt-10 h-px w-full bg-white/[0.06]" />
+
+            {/* CTA hint */}
+            <motion.p custom={8} variants={fadeUp} className="mt-6 text-sm text-gray-500">
+              Trusted by <span className="text-gold-400">500+</span> families across
+              the region for their custom furniture needs.
+            </motion.p>
+          </motion.div>
         </div>
+
+        {/* ── Stats row ── */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {STATS.map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <motion.div
+                key={stat.label}
+                custom={idx}
+                variants={fadeUp}
+                className="card card-hover group flex flex-col items-center py-8 text-center"
+              >
+                <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gold-400/10 text-gold-400 transition-colors group-hover:bg-gold-400/20">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="font-display text-3xl font-bold text-dark-400">
+                  {stat.value}
+                </span>
+                <span className="mt-1 text-sm text-gray-400">{stat.label}</span>
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
     </section>
   );

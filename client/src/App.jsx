@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 
@@ -15,16 +16,17 @@ function AppRoutes() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-cream flex items-center justify-center">
+        <div className="min-h-screen bg-dark-900 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-primary-300 border-t-primary-600 rounded-full animate-spin" />
-            <p className="text-gray-500 text-sm font-medium">Loading Shree Ram Furniture...</p>
+            <div className="w-12 h-12 border-4 border-gold-400/30 border-t-gold-400 rounded-full animate-spin" />
+            <p className="text-gray-500 text-sm font-display font-medium">Loading...</p>
           </div>
         </div>
       }
     >
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/project/:id" element={<ProjectDetailPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route
           path="/admin"

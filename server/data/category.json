@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Kitchen",
+    "slug": "kitchen",
+    "icon": "🍳",
+    "description": "Modern modular kitchens",
+    "order": 1
+  },
+  {
+    "name": "Bedroom",
+    "slug": "bedroom",
+    "icon": "🛏️",
+    "description": "Luxurious bedroom designs",
+    "order": 2
+  },
+  {
+    "name": "Living Area",
+    "slug": "living-area",
+    "icon": "🛋️",
+    "description": "Beautiful living room designs",
+    "order": 3
+  },
+  {
+    "name": "TV Unit",
+    "slug": "tv-unit",
+    "icon": "📺",
+    "description": "Custom TV units and panels",
+    "order": 4
+  },
+  {
+    "name": "Dining",
+    "slug": "dining",
+    "icon": "🍽️",
+    "description": "Elegant dining rooms",
+    "order": 5
+  },
+  {
+    "name": "Office",
+    "slug": "office",
+    "icon": "💼",
+    "description": "Modern home office workspaces",
+    "order": 6
+  }
+]

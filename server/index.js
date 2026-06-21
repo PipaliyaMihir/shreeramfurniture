@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/db');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 connectDB();
 
 const app = express();
@@ -23,9 +23,25 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/hero', require('./routes/hero'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/contact', require('./routes/contact'));
+
+const mongoose = require('mongoose');
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'Shree Ram Furniture API is running' }));
+app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState;
+  const statusMap = {
+    0: 'Disconnected',
+    1: 'Connected',
+    2: 'Connecting',
+    3: 'Disconnecting'
+  };
+  res.json({
+    status: dbStatus === 1 ? 'OK' : 'ERROR',
+    database: statusMap[dbStatus] || 'Unknown',
+    message: 'Shree Ram Furniture API is running'
+  });
+});
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {
@@ -36,6 +52,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+app.listen(PORT, '127.0.0.1', () => {
+  console.log(`🚀 Server running on http://127.0.0.1:${PORT}`);
 });

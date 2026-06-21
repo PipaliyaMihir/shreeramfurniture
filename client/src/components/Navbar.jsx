@@ -1,131 +1,185 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingBag, Phone, Home } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X, Phone, ArrowRight } from 'lucide-react';
+import logoImg from '../assets/logo.png';
 
 const navLinks = [
-  { label: 'Home', href: '#home' },
-  { label: 'Products', href: '#products' },
-  { label: 'About', href: '#about' },
-  { label: 'Contact', href: '#contact' },
+  { name: 'Home', href: '#home' },
+  { name: 'Projects', href: '#projects' },
+  { name: 'About', href: '#about' },
+  { name: 'Contact', href: '#contact' },
 ];
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  // Close mobile menu on route change
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollTo = (id) => {
     setMobileOpen(false);
-    const el = document.querySelector(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }, [location]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
+  const handleSmoothScroll = (e, href) => {
+    if (href.startsWith('#')) {
+      e.preventDefault();
+
+      // Unlock scroll immediately so browser can scroll
+      document.body.style.overflow = '';
+      setMobileOpen(false);
+
+      const id = href.slice(1);
+      if (location.pathname === '/') {
+        const el = document.getElementById(id);
+        if (el) {
+          setTimeout(() => {
+            const offset = 80;
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = el.getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }, 350);
+        }
+      } else {
+        navigate('/' + href);
+      }
+    }
   };
 
   return (
-    <motion.nav
-      initial={{ y: -80 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-lg py-3'
-          : 'bg-transparent py-5'
-      }`}
+    <nav
+      className="fixed top-0 left-0 w-full z-50 bg-dark-900/80 backdrop-blur-xl border-b border-white/[0.06] shadow-2xl"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <button onClick={() => scrollTo('#home')} className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-wood-dark rounded-xl flex items-center justify-center shadow-wood">
-              <span className="text-white font-bold text-lg font-display">SR</span>
-            </div>
-            <div className="hidden sm:block">
-              <p className={`font-display font-bold text-lg leading-tight transition-colors ${scrolled ? 'text-charcoal' : 'text-white'}`}>
-                Shree Ram
-              </p>
-              <p className={`text-xs font-medium tracking-widest uppercase transition-colors ${scrolled ? 'text-primary-600' : 'text-primary-200'}`}>
-                Furniture
-              </p>
-            </div>
-          </button>
+        <div className="flex items-center justify-between h-20">
+          {/* ── Brand ── */}
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 group"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            <img src={logoImg} alt="Shree Ram Furniture Logo" className="inline-block w-10 h-10 rounded-sm" />
+            <span className="font-display text-xl font-bold text-gold-500 tracking-tight">
+              Shree <span className="text-white">Ram Furniture</span>
+            </span>
+          </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          {/* ── Desktop Links ── */}
+          <div className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
-              <button
-                key={link.label}
-                onClick={() => scrollTo(link.href)}
-                className={`nav-link text-sm font-medium transition-colors ${
-                  scrolled ? 'text-gray-700 hover:text-primary-600' : 'text-white/90 hover:text-white'
-                }`}
+              <a
+                key={link.name}
+                href={link.href}
+                onClick={(e) => handleSmoothScroll(e, link.href)}
+                className="nav-link px-4 py-2 text-sm font-medium text-gray-350 hover:text-primary-600 transition-colors duration-300"
               >
-                {link.label}
-              </button>
+                {link.name}
+              </a>
             ))}
           </div>
 
-          {/* CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            <a href="tel:+919999999999" className={`flex items-center gap-2 text-sm font-medium transition-colors ${scrolled ? 'text-primary-600' : 'text-white'}`}>
-              <Phone size={16} />
-              +91 99999 99999
-            </a>
-            <button
-              onClick={() => scrollTo('#products')}
-              className="btn-primary text-sm py-2.5"
+          {/* ── Desktop Right ── */}
+          <div className="hidden lg:flex items-center gap-5">
+
+            <a
+              href="#contact"
+              onClick={(e) => handleSmoothScroll(e, '#contact')}
+              className="btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl"
             >
-              <ShoppingBag size={16} />
-              Shop Now
-            </button>
+              Get Free Quote
+              <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* ── Mobile Toggle ── */}
           <button
-            className={`md:hidden p-2 rounded-lg transition-colors ${scrolled ? 'text-charcoal hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}
-            onClick={() => setMobileOpen(!mobileOpen)}
+            onClick={() => setMobileOpen((v) => !v)}
+            className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-300 hover:text-primary-600 hover:bg-dark-700/50 transition-colors duration-300"
+            aria-label="Toggle menu"
           >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            <AnimatePresence mode="wait" initial={false}>
+              {mobileOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-center"
+                >
+                  <X className="w-5 h-5" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="open"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-center"
+                >
+                  <Menu className="w-5 h-5" />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ── Mobile Menu ── */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-t border-gray-100 shadow-lg"
+            key="mobile-menu"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:hidden overflow-hidden bg-dark-900 border-b border-dark-600/30"
           >
-            <div className="px-4 py-4 flex flex-col gap-1">
-              {navLinks.map((link) => (
-                <button
-                  key={link.label}
-                  onClick={() => scrollTo(link.href)}
-                  className="text-left px-4 py-3 rounded-xl text-gray-700 hover:bg-primary-50 hover:text-primary-600 font-medium transition-colors"
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6 pt-2 space-y-1">
+              {navLinks.map((link, i) => (
+                <motion.a
+                  key={link.name}
+                  href={link.href}
+                  onClick={(e) => handleSmoothScroll(e, link.href)}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:text-primary-600 hover:bg-dark-700/50 transition-colors duration-300 text-base font-medium"
                 >
-                  {link.label}
-                </button>
+                  <span className="w-1 h-1 rounded-full bg-gold-400/60" />
+                  {link.name}
+                </motion.a>
               ))}
-              <div className="border-t border-gray-100 mt-2 pt-3">
-                <button
-                  onClick={() => scrollTo('#products')}
-                  className="w-full btn-primary justify-center"
+
+              <div className="pt-4 border-t border-dark-600/30 space-y-3">
+
+                <a
+                  href="#contact"
+                  onClick={(e) => handleSmoothScroll(e, '#contact')}
+                  className="btn-primary flex items-center justify-center gap-2 w-full px-5 py-3 text-sm font-semibold rounded-xl"
                 >
-                  <ShoppingBag size={16} />
-                  Shop Now
-                </button>
+                  Get Free Quote
+                  <ArrowRight className="w-4 h-4" />
+                </a>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </nav>
   );
 }

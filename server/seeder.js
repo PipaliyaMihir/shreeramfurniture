@@ -7,6 +7,9 @@ const User = require('./models/User');
 const Category = require('./models/Category');
 const Product = require('./models/Product');
 const HeroSlide = require('./models/HeroSlide');
+const EmailConfig = require('./models/EmailConfig');
+const Quotation = require('./models/Quotation');
+const HeroConfig = require('./models/HeroConfig');
 
 const connectDB = async () => {
   await mongoose.connect(process.env.MONGODB_URI);
@@ -14,153 +17,148 @@ const connectDB = async () => {
 };
 
 const categories = [
-  { name: 'Sofa & Seating', slug: 'sofa-seating', icon: '🛋️', description: 'Premium comfort sofas and seating', order: 1 },
-  { name: 'Bedroom', slug: 'bedroom', icon: '🛏️', description: 'Elegant bedroom furniture', order: 2 },
-  { name: 'Dining', slug: 'dining', icon: '🍽️', description: 'Beautiful dining sets', order: 3 },
-  { name: 'Office', slug: 'office', icon: '💼', description: 'Modern office furniture', order: 4 },
-  { name: 'Storage', slug: 'storage', icon: '🗄️', description: 'Smart storage solutions', order: 5 },
-  { name: 'Outdoor', slug: 'outdoor', icon: '🌿', description: 'Durable outdoor furniture', order: 6 },
+  { name: 'Kitchen', slug: 'kitchen', icon: '🍳', description: 'Modern modular kitchens', order: 1 },
+  { name: 'Bedroom', slug: 'bedroom', icon: '🛏️', description: 'Luxurious bedroom designs', order: 2 },
+  { name: 'Living Area', slug: 'living-area', icon: '🛋️', description: 'Beautiful living room designs', order: 3 },
+  { name: 'TV Unit', slug: 'tv-unit', icon: '📺', description: 'Custom TV units and panels', order: 4 },
+  { name: 'Dining', slug: 'dining', icon: '🍽️', description: 'Elegant dining rooms', order: 5 },
+  { name: 'Office', slug: 'office', icon: '💼', description: 'Modern home office workspaces', order: 6 },
 ];
 
 const products = [
   {
-    name: 'Royal Comfort 3-Seater Sofa',
-    description: 'Luxurious 3-seater sofa with premium fabric upholstery and solid wood legs. Perfect for your living room.',
-    price: 45999,
-    originalPrice: 55000,
-    category: 'Sofa & Seating',
-    images: [],
+    name: 'Nand Prime Bungalow (Satellite)',
+    description: 'Bespoke residential carpentry project completed for a luxury 3 BHK bungalow, featuring custom wood panelling, modular kitchen cabinets, sliding wardrobes, and LED-lit TV console panels built entirely on-site.',
+    categories: [
+      {
+        name: 'Kitchen',
+        images: ['https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&q=80']
+      },
+      {
+        name: 'Bedroom',
+        images: ['https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&q=80']
+      },
+      {
+        name: 'Living Area',
+        images: ['https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80']
+      },
+      {
+        name: 'TV Unit',
+        images: ['https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80']
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&q=80',
+      'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&q=80',
+      'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80',
+      'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80'
+    ],
     featured: true,
-    material: 'Teak Wood + Premium Fabric',
-    dimensions: '220cm x 90cm x 85cm',
+    rating: 4.9,
+    reviewCount: 48,
+    price: 0,
+    originalPrice: 0
+  },
+  {
+    name: 'Royal Residency Bungalow (Bopal)',
+    description: 'Premium custom furniture and woodwork executed on-site for a high-end duplex bungalow, emphasizing handcrafted bed panels, custom dressing areas, a bespoke dining table, and living room seating structures.',
+    categories: [
+      {
+        name: 'Bedroom',
+        images: ['https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=800&q=80']
+      },
+      {
+        name: 'Living Area',
+        images: ['https://images.unsplash.com/photo-1615066390971-03e4e1c36ddf?w=800&q=80']
+      },
+      {
+        name: 'Dining',
+        images: ['https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&q=80']
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=800&q=80',
+      'https://images.unsplash.com/photo-1615066390971-03e4e1c36ddf?w=800&q=80',
+      'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&q=80'
+    ],
+    featured: true,
     rating: 4.8,
-    reviewCount: 124,
-    tags: ['sofa', 'living room', 'fabric'],
+    reviewCount: 35,
+    price: 0,
+    originalPrice: 0
   },
   {
-    name: 'Maharaja King Size Bed',
-    description: 'Grand king-size bed with intricate wooden carvings and a premium mattress base. Built to last a lifetime.',
-    price: 62000,
-    originalPrice: 75000,
-    category: 'Bedroom',
-    images: [],
-    featured: true,
-    material: 'Sheesham Wood',
-    dimensions: '200cm x 180cm x 120cm',
-    rating: 4.9,
-    reviewCount: 89,
-    tags: ['bed', 'bedroom', 'king size'],
-  },
-  {
-    name: 'Heritage Dining Set (6 Seater)',
-    description: '6-seater solid wood dining table with matching chairs. Features beautiful grain patterns and lacquer finish.',
-    price: 78500,
-    originalPrice: 95000,
-    category: 'Dining',
-    images: [],
-    featured: true,
-    material: 'Mango Wood',
-    dimensions: '180cm x 90cm x 76cm',
+    name: 'Shree Ram Corporate Hub (Prahladnagar)',
+    description: 'Modern office carpentry project featuring custom executive desks, library wall cabinets, storage units, conference room tables, and wooden acoustic paneling.',
+    categories: [
+      {
+        name: 'Office',
+        images: ['https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&q=80']
+      },
+      {
+        name: 'Living Area',
+        images: ['https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=800&q=80']
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&q=80',
+      'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=800&q=80'
+    ],
+    featured: false,
     rating: 4.7,
-    reviewCount: 67,
-    tags: ['dining', 'table', 'chairs'],
+    reviewCount: 22,
+    price: 0,
+    originalPrice: 0
   },
   {
-    name: 'Executive Office Desk',
-    description: 'Premium L-shaped executive desk with built-in storage drawers and cable management system.',
-    price: 28500,
-    originalPrice: 35000,
-    category: 'Office',
-    images: [],
+    name: 'Shivalik Showroom (Gota)',
+    description: 'High-end retail showroom carpentry layout containing customized product display racks, display cabinetry, and a large wooden reception desk counter.',
+    categories: [
+      {
+        name: 'TV Unit', // Categorized as TV/Display unit type woodwork
+        images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80']
+      },
+      {
+        name: 'Dining', // Categorized under general display tables
+        images: ['https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80']
+      }
+    ],
+    images: [
+      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80',
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80'
+    ],
     featured: false,
-    material: 'Engineered Wood + MDF',
-    dimensions: '160cm x 140cm x 75cm',
     rating: 4.6,
-    reviewCount: 45,
-    tags: ['office', 'desk', 'workspace'],
-  },
-  {
-    name: 'Wooden Wardrobe with Mirror',
-    description: '3-door wardrobe with full-length mirror, multiple shelves and hanging sections for complete organization.',
-    price: 35000,
-    originalPrice: 42000,
-    category: 'Bedroom',
-    images: [],
-    featured: false,
-    material: 'Teak Wood',
-    dimensions: '180cm x 55cm x 210cm',
-    rating: 4.5,
-    reviewCount: 78,
-    tags: ['wardrobe', 'bedroom', 'storage'],
-  },
-  {
-    name: 'Bookshelf Cabinet',
-    description: 'Elegant 5-tier bookshelf with adjustable shelves. Perfect for home library or office.',
-    price: 12500,
-    originalPrice: 16000,
-    category: 'Storage',
-    images: [],
-    featured: false,
-    material: 'Sheesham Wood',
-    dimensions: '100cm x 35cm x 180cm',
-    rating: 4.4,
-    reviewCount: 56,
-    tags: ['bookshelf', 'storage', 'office'],
-  },
-  {
-    name: 'Garden Outdoor Chair Set',
-    description: 'Weather-resistant 4-chair set with table for outdoor use. Perfect for balcony, garden, or patio.',
-    price: 18000,
-    originalPrice: 22000,
-    category: 'Outdoor',
-    images: [],
-    featured: false,
-    material: 'Teak Wood (Weather Treated)',
-    dimensions: 'Chair: 60cm x 60cm x 90cm',
-    rating: 4.6,
-    reviewCount: 34,
-    tags: ['outdoor', 'garden', 'chair'],
-  },
-  {
-    name: 'Premium L-Shape Sofa',
-    description: 'Modern L-shaped corner sofa with premium leatherette finish and ottoman. The centerpiece of any living room.',
-    price: 68000,
-    originalPrice: 85000,
-    category: 'Sofa & Seating',
-    images: [],
-    featured: true,
-    material: 'Solid Wood + Leatherette',
-    dimensions: '280cm x 200cm x 85cm',
-    rating: 4.9,
-    reviewCount: 102,
-    tags: ['sofa', 'L-shape', 'living room', 'leather'],
-  },
+    reviewCount: 19,
+    price: 0,
+    originalPrice: 0
+  }
 ];
 
 const heroSlides = [
   {
-    title: 'Crafted with Tradition,\nDesigned for Today',
-    subtitle: 'Discover our exclusive collection of handcrafted wooden furniture',
+    title: 'Crafted with Passion,\nBuilt to Last',
+    subtitle: 'High-quality custom furniture & on-site carpentry contracting for homes and offices',
     image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1600&q=80',
-    ctaText: 'Explore Collection',
+    ctaText: 'View Our Projects',
     ctaLink: '#products',
     order: 1,
     active: true,
   },
   {
-    title: 'Transform Your\nLiving Space',
-    subtitle: 'Premium quality furniture for every room in your home',
+    title: 'Modern Modular\nKitchen Solutions',
+    subtitle: 'Bespoke designs tailored for style, utility, and durable performance',
     image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1600&q=80',
-    ctaText: 'Shop Now',
+    ctaText: 'Explore Work',
     ctaLink: '#products',
     order: 2,
     active: true,
   },
   {
-    title: 'Bedroom Furniture\nOf Your Dreams',
-    subtitle: 'Sleep in luxury with our handcrafted bedroom collections',
+    title: 'Bespoke Custom\nFurniture & Carpentry',
+    subtitle: 'Handcrafted furniture made directly on-site — bungalows, offices, and showrooms',
     image: 'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=1600&q=80',
-    ctaText: 'View Bedroom',
+    ctaText: 'See Portfolio',
     ctaLink: '#products',
     order: 3,
     active: true,
@@ -176,6 +174,9 @@ const seed = async () => {
     await Category.deleteMany({});
     await Product.deleteMany({});
     await HeroSlide.deleteMany({});
+    await EmailConfig.deleteMany({});
+    await Quotation.deleteMany({});
+    await HeroConfig.deleteMany({});
 
     // Create admin user (let pre-save hook hash the password)
     await User.create({
@@ -197,6 +198,23 @@ const seed = async () => {
     // Seed hero slides
     await HeroSlide.insertMany(heroSlides);
     console.log('✅ Hero slides seeded');
+
+    // Seed default hero configuration
+    await HeroConfig.create({
+      title: 'Crafted with Passion,\nBuilt to Last',
+      subtitle: 'Premium custom furniture & on-site carpentry contracting for homes and offices',
+      ctaText: 'Explore Our Work',
+      ctaLink: '#projects',
+    });
+    console.log('✅ Default Hero Configuration seeded');
+
+    // Seed default email settings
+    await EmailConfig.create({
+      subject: 'Thank you for requesting a quotation from Shree Ram Furniture!',
+      body: 'Hello,\n\nThank you for reaching out to us. We have received your request for a custom furniture quotation. Please find attached our pricing catalog/brochure.\n\nBest regards,\nShree Ram Furniture Team',
+      pdfUrl: ''
+    });
+    console.log('✅ Default Email Configuration seeded');
 
     console.log('\n🎉 Database seeded successfully!');
     console.log(`📧 Admin Email: ${process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com'}`);

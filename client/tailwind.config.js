@@ -4,63 +4,130 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Warm cream and sand background palette (renamed dark to preserve class names)
+        dark: {
+          950: '#EAE5D8', // warm sand dark
+          900: '#F6F2E5', // light warm cream paper background
+          800: '#FAF8F5', // lighter cream/white card background
+          700: '#EDE6D4', // warm inner input backgrounds
+          600: '#DFD7C0', // warm grey beige
+          500: '#8E7B73', // medium wood brown
+          400: '#2E2724', // dark wood brown text/accents
+        },
+        // Warm creative wood/amber tones (terracotta/gold blend)
+        gold: {
+          50:  '#FDF8F5',
+          100: '#F7E7DF',
+          200: '#EFCFBF',
+          300: '#E4AB94',
+          400: '#D58564', // Terracotta-orange
+          500: '#C86A4B', // Warm wood clay
+          600: '#A65337', // Mahogany red-brown
+          700: '#843F28',
+          800: '#622F1D',
+          900: '#401E13',
+        },
+        // Primary Forest Green accent palette
         primary: {
-          50: '#fdf8f0',
-          100: '#faefd8',
-          200: '#f4dba8',
-          300: '#ecc070',
-          400: '#e2a040',
-          500: '#d4852a',
-          600: '#b86b1e',
-          700: '#96521a',
-          800: '#7a421b',
-          900: '#643819',
-          950: '#3a1d09',
+          50:  '#F3F7F5',
+          100: '#E2ECE7',
+          200: '#C1D6CD',
+          300: '#9FBFAF',
+          400: '#69947F',
+          500: '#355E4E', // Forest Green primary accent
+          600: '#2B4D40',
+          700: '#213B31',
+          800: '#172A22',
+          900: '#0E1A15',
         },
-        wood: {
-          light: '#c8956c',
-          mid: '#a0522d',
-          dark: '#6b3a2a',
-          deep: '#3d1f14',
+        // Gray redefined to custom warm wood/charcoal tones for perfect readability
+        gray: {
+          50:  '#FAF8F5',
+          100: '#F0ECE4',
+          200: '#E2DCD0',
+          300: '#2E2724', // Deep charcoal-brown (for main text!)
+          400: '#524641', // Charcoal-brown secondary text
+          500: '#75655E', // Muted brown text
+          600: '#8E7B73',
+          700: '#2E2724',
+          800: '#1E1B19',
+          900: '#0E0D0C',
         },
-        cream: '#fdf6e3',
-        charcoal: '#1a1a2e',
+        cream: '#F6F2E5',
+        charcoal: '#2E2724',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Playfair Display', 'Georgia', 'serif'],
+        display: ['Outfit', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       animation: {
-        'fade-in': 'fadeIn 0.6s ease-out',
-        'fade-up': 'fadeUp 0.6s ease-out',
-        'slide-in-left': 'slideInLeft 0.5s ease-out',
-        'slide-in-right': 'slideInRight 0.5s ease-out',
-        'scale-in': 'scaleIn 0.3s ease-out',
-        'float': 'float 3s ease-in-out infinite',
-        'shimmer': 'shimmer 1.5s infinite',
-        'spin-slow': 'spin 8s linear infinite',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'fade-in': 'fadeIn 0.6s ease-out forwards',
+        'fade-up': 'fadeUp 0.7s ease-out forwards',
+        'slide-in-left': 'slideInLeft 0.6s ease-out forwards',
+        'slide-in-right': 'slideInRight 0.6s ease-out forwards',
+        'scale-in': 'scaleIn 0.5s ease-out forwards',
+        'float': 'float 6s ease-in-out infinite',
+        'shimmer': 'shimmer 2s infinite',
+        'spin-slow': 'spin 3s linear infinite',
+        'pulse-slow': 'pulse 4s ease-in-out infinite',
+        'glow': 'glow 2s ease-in-out infinite alternate',
+        'gradient-x': 'gradientX 8s ease infinite',
+        'stagger-in': 'fadeUp 0.5s ease-out forwards',
       },
       keyframes: {
-        fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
-        fadeUp: { from: { opacity: 0, transform: 'translateY(20px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
-        slideInLeft: { from: { opacity: 0, transform: 'translateX(-30px)' }, to: { opacity: 1, transform: 'translateX(0)' } },
-        slideInRight: { from: { opacity: 0, transform: 'translateX(30px)' }, to: { opacity: 1, transform: 'translateX(0)' } },
-        scaleIn: { from: { opacity: 0, transform: 'scale(0.9)' }, to: { opacity: 1, transform: 'scale(1)' } },
-        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
-        shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideInLeft: {
+          '0%': { opacity: '0', transform: 'translateX(-30px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        slideInRight: {
+          '0%': { opacity: '0', transform: 'translateX(30px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        scaleIn: {
+          '0%': { opacity: '0', transform: 'scale(0.9)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-12px)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        glow: {
+          '0%': { boxShadow: '0 0 5px rgba(200,106,75,0.2), 0 0 20px rgba(200,106,75,0.1)' },
+          '100%': { boxShadow: '0 0 10px rgba(200,106,75,0.4), 0 0 40px rgba(200,106,75,0.15)' },
+        },
+        gradientX: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
       },
       backgroundImage: {
-        'wood-grain': "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 Q 25 45 50 50 Q 75 55 100 50' stroke='rgba(160,82,45,0.1)' fill='none' stroke-width='1'/%3E%3C/svg%3E\")",
-        'hero-gradient': 'linear-gradient(135deg, rgba(26,26,46,0.85) 0%, rgba(61,31,20,0.7) 100%)',
+        'hero-gradient': 'linear-gradient(135deg, #F6F2E5 0%, #EDE4D3 50%, #FAF8F5 100%)',
+        'gold-gradient': 'linear-gradient(135deg, #D58564 0%, #C86A4B 50%, #A65337 100%)',
+        'card-gradient': 'linear-gradient(180deg, transparent 0%, rgba(246,242,229,0.95) 100%)',
+        'glass-gradient': 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.5) 100%)',
       },
       boxShadow: {
-        'wood': '0 4px 20px rgba(160,82,45,0.2)',
-        'wood-lg': '0 8px 40px rgba(160,82,45,0.3)',
-        'glow': '0 0 20px rgba(212,133,42,0.4)',
-        'card': '0 2px 15px rgba(0,0,0,0.08)',
-        'card-hover': '0 8px 30px rgba(0,0,0,0.15)',
+        'glow': '0 0 20px rgba(200,106,75,0.15)',
+        'glow-lg': '0 0 40px rgba(200,106,75,0.2)',
+        'card': '0 4px 24px rgba(46,39,36,0.06)',
+        'card-hover': '0 8px 40px rgba(46,39,36,0.12)',
+        'glass': '0 8px 32px rgba(46,39,36,0.05), inset 0 1px 0 rgba(255,255,255,0.8)',
+      },
+      borderRadius: {
+        '4xl': '2rem',
       },
     },
   },

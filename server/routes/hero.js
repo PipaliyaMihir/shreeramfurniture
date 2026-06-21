@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const HeroSlide = require('../models/HeroSlide');
+const HeroConfig = require('../models/HeroConfig');
 const { protect } = require('../middleware/auth');
-
+ 
 // @GET /api/hero
 router.get('/', async (req, res) => {
   try {
@@ -12,7 +13,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
+ 
 // @GET /api/hero/all (admin - all slides)
 router.get('/all', protect, async (req, res) => {
   try {
@@ -20,6 +21,34 @@ router.get('/all', protect, async (req, res) => {
     res.json(slides);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// @GET /api/hero/config
+router.get('/config', async (req, res) => {
+  try {
+    let config = await HeroConfig.findOne();
+    if (!config) {
+      config = await HeroConfig.create({});
+    }
+    res.json(config);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @PUT /api/hero/config (admin)
+router.put('/config', protect, async (req, res) => {
+  try {
+    let config = await HeroConfig.findOne();
+    if (!config) {
+      config = await HeroConfig.create(req.body);
+    } else {
+      config = await HeroConfig.findByIdAndUpdate(config._id, req.body, { new: true });
+    }
+    res.json(config);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 });
 

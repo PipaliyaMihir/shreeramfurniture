@@ -1,128 +1,216 @@
-import { Phone, Mail, MapPin, ArrowRight } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Phone, Mail, MapPin, Clock, ArrowRight, Heart } from 'lucide-react';
 
-const socialLinks = [
-  { label: 'f', name: 'Facebook', href: '#' },
-  { label: '📷', name: 'Instagram', href: '#' },
-  { label: '𝕏', name: 'Twitter', href: '#' },
-  { label: '▶', name: 'YouTube', href: '#' },
+const services = [
+  'Bedroom Design',
+  'Living Area',
+  'TV Unit',
+  'Dining Room',
+  'Office Setup',
 ];
 
-const footerLinks = {
-  'Quick Links': ['Home', 'Products', 'About Us', 'Contact'],
-  'Categories': ['Sofa & Seating', 'Bedroom', 'Dining', 'Office', 'Storage', 'Outdoor'],
-  'Services': ['Custom Design', 'Free Delivery', 'Installation', 'Warranty', 'EMI Available'],
-};
+const quickLinks = [
+  { name: 'Home', href: '#home' },
+  { name: 'Our Projects', href: '#projects' },
+  { name: 'About Us', href: '#about' },
+  { name: 'Contact', href: '#contact' },
+];
 
 export default function Footer() {
-  const scrollTo = (id) => {
-    const el = document.querySelector(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  const handleSmoothScroll = (e, href) => {
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const id = href.slice(1);
+      if (location.pathname === '/') {
+        const el = document.getElementById(id);
+        if (el) {
+          const offset = 80;
+          const bodyRect = document.body.getBoundingClientRect().top;
+          const elementRect = el.getBoundingClientRect().top;
+          const elementPosition = elementRect - bodyRect;
+          const offsetPosition = elementPosition - offset;
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
+      } else {
+        navigate('/' + href);
+      }
+    }
+  };
   return (
-    <footer className="bg-charcoal text-white">
-      {/* CTA Banner */}
-      <div className="bg-gradient-to-r from-primary-600 via-wood-mid to-wood-dark py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
-              Looking for Custom Furniture?
-            </h3>
-            <p className="text-white/80">Get a free design consultation and quote today.</p>
-          </div>
-          <div className="flex gap-4">
-            <button
-              onClick={() => scrollTo('#contact')}
-              className="flex items-center gap-2 bg-white text-primary-700 font-bold px-6 py-3 rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-            >
-              Get Free Quote
-              <ArrowRight size={18} />
-            </button>
-          </div>
+    <footer className="relative bg-dark-900 border-t border-dark-600/30">
+      {/* ── CTA Banner ── */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-gold-400/10 via-transparent to-gold-600/10 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center relative z-10">
+          <span className="section-label">Let&apos;s Build Together</span>
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-dark-400 mt-4 mb-4">
+            Ready for Your{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-400 to-gold-600">
+              Dream Furniture?
+            </span>
+          </h2>
+          <p className="text-gray-400 max-w-xl mx-auto text-base sm:text-lg mb-8">
+            Transform your space with our expert craftsmanship. Get a free consultation and
+            let&apos;s bring your vision to life.
+          </p>
+          <a
+            href="#contact"
+            onClick={(e) => handleSmoothScroll(e, '#contact')}
+            className="btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold rounded-xl"
+          >
+            Get Free Consultation
+            <ArrowRight className="w-4 h-4" />
+          </a>
         </div>
       </div>
 
-      {/* Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-wood-dark rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-xl font-display">SR</span>
+      {/* ── Main Grid ── */}
+      <div className="border-t border-dark-600/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+            {/* Column 1 – Brand */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2.5 mb-5">
+                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-gradient-to-br from-gold-400 to-gold-600" />
+                <span className="font-display text-xl font-bold text-dark-400 tracking-tight">
+                  Shree <span className="text-gold-550">Ram Furniture</span>
+                </span>
               </div>
-              <div>
-                <p className="font-display font-bold text-xl">Shree Ram</p>
-                <p className="text-primary-400 text-xs font-medium tracking-widest uppercase">Furniture</p>
-              </div>
-            </div>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Crafting premium wooden furniture since 2009. We blend traditional Indian craftsmanship with modern designs to create furniture that lasts a lifetime.
-            </p>
-
-            {/* Contact */}
-            <div className="space-y-3">
-              {[
-                { icon: Phone, text: '+91 99999 99999' },
-                { icon: Mail, text: 'info@shreeramfurniture.com' },
-                { icon: MapPin, text: 'Rajkot, Gujarat - 360001' },
-              ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-3 text-gray-400 text-sm hover:text-primary-400 transition-colors">
-                  <Icon size={16} className="text-primary-500 flex-shrink-0" />
-                  {text}
-                </div>
-              ))}
-            </div>
-
-            {/* Social */}
-            <div className="flex gap-3 mt-6">
-              {socialLinks.map(({ label, name, href }) => (
+              <p className="text-gray-405 text-sm leading-relaxed mb-6">
+                Premium custom on-site furniture &amp; carpentry solutions for residential and
+                commercial spaces. Crafting beautiful, durable custom furniture since 2010.
+              </p>
+              <div className="space-y-3">
                 <a
-                  key={name}
-                  href={href}
-                  title={name}
-                  className="w-9 h-9 bg-white/10 hover:bg-primary-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 text-sm font-bold"
+                  href="tel:+919876543210"
+                  className="flex items-center gap-2.5 text-sm text-gray-400 hover:text-primary-600 transition-colors duration-300"
                 >
-                  {label}
+                  <Phone className="w-4 h-4 text-gold-500/70" />
+                  +91 99241 01181 , +91 99042 27279
                 </a>
-              ))}
+                <a
+                  href="mailto:info@shreeramfurniture.com"
+                  className="flex items-center gap-2.5 text-sm text-gray-400 hover:text-primary-600 transition-colors duration-300"
+                >
+                  <Mail className="w-4 h-4 text-gold-500/70" />
+                  shreeramfurniture@gmail.com
+                </a>
+                <div className="flex items-start gap-2.5 text-sm text-gray-400">
+                  <MapPin className="w-4 h-4 mt-0.5 text-gold-500/70 shrink-0" />
+                  <span>123, Furniture Lane, Craft City, India</span>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Links */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
-              <h4 className="font-semibold text-white mb-5 text-sm uppercase tracking-wider">{title}</h4>
+            {/* Column 2 – Our Services */}
+            <div>
+              <h4 className="font-display text-sm font-semibold text-dark-400 uppercase tracking-wider mb-5">
+                Our Services
+              </h4>
               <ul className="space-y-3">
-                {links.map((link) => (
-                  <li key={link}>
+                {services.map((service) => (
+                  <li key={service}>
                     <a
-                      href="#"
-                      onClick={(e) => { e.preventDefault(); scrollTo('#products'); }}
-                      className="text-gray-400 text-sm hover:text-primary-400 transition-colors flex items-center gap-1 group"
+                      href="#projects"
+                      onClick={(e) => handleSmoothScroll(e, '#projects')}
+                      className="group flex items-center gap-2 text-sm text-gray-400 hover:text-primary-600 transition-colors duration-300"
                     >
-                      <ArrowRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity -ml-4 group-hover:ml-0 duration-200" />
-                      {link}
+                      <ArrowRight className="w-3 h-3 text-gold-400/50 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all duration-300" />
+                      {service}
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
-          ))}
+
+            {/* Column 3 – Quick Links */}
+            <div>
+              <h4 className="font-display text-sm font-semibold text-dark-400 uppercase tracking-wider mb-5">
+                Quick Links
+              </h4>
+              <ul className="space-y-3">
+                {quickLinks.map((link) => (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      onClick={(e) => handleSmoothScroll(e, link.href)}
+                      className="group flex items-center gap-2 text-sm text-gray-400 hover:text-primary-600 transition-colors duration-300"
+                    >
+                      <ArrowRight className="w-3 h-3 text-gold-400/50 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all duration-300" />
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Column 4 – Contact Info */}
+            <div>
+              <h4 className="font-display text-sm font-semibold text-dark-400 uppercase tracking-wider mb-5">
+                Contact Info
+              </h4>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 mt-0.5 text-gold-500/70 shrink-0" />
+                  <span className="text-sm text-gray-400 leading-relaxed">
+                    123, Furniture Lane,
+                    <br />
+                    Craft City, India — 400001
+                  </span>
+                </li>
+                <li>
+                  <a
+                    href="tel:+919876543210"
+                    className="flex items-center gap-3 text-sm text-gray-400 hover:text-primary-600 transition-colors duration-300"
+                  >
+                    <Phone className="w-4 h-4 text-gold-500/70" />
+                    +91 99241 01181 , +91 99042 27279
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="mailto:info@shreeramfurniture.com"
+                    className="flex items-center gap-3 text-sm text-gray-400 hover:text-primary-600 transition-colors duration-300"
+                  >
+                    <Mail className="w-4 h-4 text-gold-500/70" />
+                    shreeramfurniture@gmail.com
+                  </a>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Clock className="w-4 h-4 mt-0.5 text-gold-500/70 shrink-0" />
+                  <span className="text-sm text-gray-400 leading-relaxed">
+                    Mon – Sat: 9:00 AM – 7:00 PM
+                    <br />
+                    Sunday: Closed
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-white/10 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-gray-500 text-sm">
-            © 2024 Shree Ram Furniture. All rights reserved.
+      {/* ── Bottom Bar ── */}
+      <div className="border-t border-dark-600/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-gray-500 text-center sm:text-left">
+            © {new Date().getFullYear()} Shree Ram Furniture. All rights reserved. Made with{' '}
+            <Heart className="w-3 h-3 inline-block text-gold-400/70 fill-gold-400/70 -mt-px" />{' '}
+            in India.
           </p>
-          <div className="flex gap-6">
-            <a href="#" className="text-gray-500 hover:text-primary-400 text-xs transition-colors">Privacy Policy</a>
-            <a href="#" className="text-gray-500 hover:text-primary-400 text-xs transition-colors">Terms of Service</a>
-            <a href="/admin/login" className="text-gray-500 hover:text-primary-400 text-xs transition-colors">Admin</a>
-          </div>
+          <Link
+            to="/admin/login"
+            className="text-xs text-gray-500 hover:text-primary-600 transition-colors duration-300"
+          >
+            Admin Login
+          </Link>
         </div>
       </div>
     </footer>

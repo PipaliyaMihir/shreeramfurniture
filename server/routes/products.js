@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
   try {
     const { category, featured, search, limit = 50, page = 1 } = req.query;
     const query = {};
-    if (category && category !== 'all') query.category = category;
+    if (category && category !== 'all') query['categories.name'] = category;
     if (featured === 'true') query.featured = true;
     if (search) query.name = { $regex: search, $options: 'i' };
 
@@ -35,6 +35,9 @@ router.get('/:id', async (req, res) => {
 // @POST /api/products (admin)
 router.post('/', protect, async (req, res) => {
   try {
+    if (req.body.categories && Array.isArray(req.body.categories)) {
+      req.body.images = req.body.categories.reduce((acc, cat) => acc.concat(cat.images || []), []);
+    }
     const product = await Product.create(req.body);
     res.status(201).json(product);
   } catch (error) {
@@ -45,6 +48,9 @@ router.post('/', protect, async (req, res) => {
 // @PUT /api/products/:id (admin)
 router.put('/:id', protect, async (req, res) => {
   try {
+    if (req.body.categories && Array.isArray(req.body.categories)) {
+      req.body.images = req.body.categories.reduce((acc, cat) => acc.concat(cat.images || []), []);
+    }
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,

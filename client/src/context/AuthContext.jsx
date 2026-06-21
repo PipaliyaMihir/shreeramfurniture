@@ -5,22 +5,22 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const u = localStorage.getItem('srf_user');
+    const u = sessionStorage.getItem('srf_user');
     return u ? JSON.parse(u) : null;
   });
 
   const login = async (email, password) => {
     const res = await loginAPI({ email, password });
     const userData = res.data;
-    localStorage.setItem('srf_token', userData.token);
-    localStorage.setItem('srf_user', JSON.stringify(userData));
+    sessionStorage.setItem('srf_token', userData.token);
+    sessionStorage.setItem('srf_user', JSON.stringify(userData));
     setUser(userData);
     return userData;
   };
 
   const logout = () => {
-    localStorage.removeItem('srf_token');
-    localStorage.removeItem('srf_user');
+    sessionStorage.removeItem('srf_token');
+    sessionStorage.removeItem('srf_user');
     setUser(null);
   };
 

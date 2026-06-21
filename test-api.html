@@ -35,18 +35,18 @@
   <div class="links">
     <a href="http://localhost:3000" target="_blank">🌐 Open Website</a>
     <a href="http://localhost:3000/admin/login" target="_blank">🔐 Admin Login</a>
-    <a href="http://localhost:5000/api/health" target="_blank">💚 API Health</a>
-    <a href="http://localhost:5000/api/products" target="_blank">📦 Products API</a>
-    <a href="http://localhost:5000/api/categories" target="_blank">🏷️ Categories API</a>
+    <a href="http://127.0.0.1:5001/api/health" target="_blank">💚 API Health</a>
+    <a href="http://127.0.0.1:5001/api/products" target="_blank">📦 Products API</a>
+    <a href="http://127.0.0.1:5001/api/categories" target="_blank">🏷️ Categories API</a>
   </div>
 
   <script>
     const tests = [
-      { id: 'health', label: '💚 API Health Check', url: 'http://localhost:5000/api/health', method: 'GET' },
-      { id: 'categories', label: '🏷️ Get Categories', url: 'http://localhost:5000/api/categories', method: 'GET' },
-      { id: 'products', label: '📦 Get Products', url: 'http://localhost:5000/api/products', method: 'GET' },
-      { id: 'hero', label: '🖼️ Get Hero Slides', url: 'http://localhost:5000/api/hero', method: 'GET' },
-      { id: 'login', label: '🔐 Admin Login', url: 'http://localhost:5000/api/auth/login', method: 'POST', body: { email: 'admin@shreeramfurniture.com', password: 'Admin@123' } },
+      { id: 'health', label: '💚 API Health Check', url: 'http://127.0.0.1:5001/api/health', method: 'GET' },
+      { id: 'categories', label: '🏷️ Get Categories', url: 'http://127.0.0.1:5001/api/categories', method: 'GET' },
+      { id: 'products', label: '📦 Get Products', url: 'http://127.0.0.1:5001/api/products', method: 'GET' },
+      { id: 'hero', label: '🖼️ Get Hero Slides', url: 'http://127.0.0.1:5001/api/hero', method: 'GET' },
+      { id: 'login', label: '🔐 Admin Login', url: 'http://127.0.0.1:5001/api/auth/login', method: 'POST', body: { email: 'admin@shreeramfurniture.com', password: 'Admin@123' } },
     ];
 
     function render() {

@@ -1,170 +1,194 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Filter, Search, ChevronDown, Grid, LayoutList } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from './ProductCard';
 import { getProducts, getCategories } from '../api';
 
-function SkeletonCard() {
-  return (
-    <div className="card overflow-hidden">
-      <div className="skeleton aspect-[4/3]" />
-      <div className="p-4 space-y-3">
-        <div className="skeleton h-3 w-1/3 rounded" />
-        <div className="skeleton h-4 w-4/5 rounded" />
-        <div className="skeleton h-3 w-full rounded" />
-        <div className="skeleton h-3 w-2/3 rounded" />
-        <div className="flex justify-between items-center pt-1">
-          <div className="skeleton h-5 w-1/3 rounded" />
-          <div className="skeleton h-8 w-1/4 rounded-lg" />
-        </div>
+const SkeletonCard = () => (
+  <div className="rounded-2xl bg-dark-800 border border-white/[0.06] overflow-hidden animate-pulse">
+    <div className="aspect-[16/10] bg-dark-700" />
+    <div className="p-4 sm:p-5 space-y-3">
+      <div className="h-5 bg-dark-700 rounded w-3/4" />
+      <div className="flex gap-1.5">
+        <div className="h-5 bg-dark-700 rounded-full w-16" />
+        <div className="h-5 bg-dark-700 rounded-full w-14" />
       </div>
     </div>
-  );
-}
+  </div>
+);
 
-export default function ProductSection() {
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const ProductSection = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [gridView, setGridView] = useState('grid');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCategories().then((res) => setCategories(res.data)).catch(() => {});
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [productsRes, categoriesRes] = await Promise.all([
+          getProducts({ limit: 100 }),
+          getCategories(),
+        ]);
+        const productsData = productsRes.data?.products || productsRes.data;
+        setProducts(Array.isArray(productsData) ? productsData : []);
+        setCategories(categoriesRes.data || []);
+      } catch (err) {
+        console.error('Failed to fetch project data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    setLoading(true);
-    const params = {};
-    if (activeCategory !== 'all') params.category = activeCategory;
-    if (search) params.search = search;
-
-    getProducts(params)
-      .then((res) => setProducts(res.data.products || []))
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
-  }, [activeCategory, search]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setSearch(searchInput);
-    setActiveCategory('all');
-  };
-
-  const allCategories = [{ name: 'All Products', slug: 'all', icon: '🛒' }, ...categories];
+  const filteredProducts =
+    activeCategory === 'all'
+      ? products
+      : products.filter((product) => {
+          if (!product.categories || !Array.isArray(product.categories)) return false;
+          return product.categories.some((cat) => {
+            const catName = typeof cat === 'string' ? cat : cat.name || '';
+            return catName === activeCategory;
+          });
+        });
 
   return (
-    <section id="products" className="py-20 bg-gray-50">
+    <section id="projects" className="py-20 sm:py-28">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <span className="inline-block text-primary-600 font-semibold text-sm uppercase tracking-widest mb-3">
-            Our Collection
-          </span>
-          <h2 className="section-title">
-            Handcrafted{' '}
-            <span className="text-gradient">Furniture</span>
-          </h2>
-          <p className="section-subtitle mx-auto">
-            Explore our wide range of premium wooden furniture crafted with precision and care
-          </p>
-        </motion.div>
-
-        {/* Search & Filter */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex flex-col sm:flex-row gap-4 mb-8"
-        >
-          <form onSubmit={handleSearch} className="flex-1 relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search furniture..."
-              className="input-field pl-11 pr-4"
-            />
-          </form>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setGridView('grid')}
-              className={`p-2.5 rounded-lg border transition-colors ${gridView === 'grid' ? 'bg-primary-100 border-primary-300 text-primary-600' : 'border-gray-200 text-gray-500 hover:border-primary-200'}`}
-            >
-              <Grid size={18} />
-            </button>
-            <button
-              onClick={() => setGridView('list')}
-              className={`p-2.5 rounded-lg border transition-colors ${gridView === 'list' ? 'bg-primary-100 border-primary-300 text-primary-600' : 'border-gray-200 text-gray-500 hover:border-primary-200'}`}
-            >
-              <LayoutList size={18} />
-            </button>
-          </div>
-        </motion.div>
-
-        {/* Category Tabs */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="flex flex-wrap gap-2 mb-10"
-        >
-          {allCategories.map((cat) => (
-            <button
-              key={cat.slug}
-              onClick={() => { setActiveCategory(cat.slug === 'all' ? 'all' : cat.name); setSearch(''); setSearchInput(''); }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-                (cat.slug === 'all' ? activeCategory === 'all' : activeCategory === cat.name)
-                  ? 'bg-primary-600 text-white shadow-wood'
-                  : 'bg-white text-gray-600 hover:bg-primary-50 hover:text-primary-600 border border-gray-200'
-              }`}
-            >
-              <span>{cat.icon}</span>
-              {cat.name}
-            </button>
-          ))}
-        </motion.div>
-
-        {/* Products Grid */}
-        {loading ? (
-          <div className={`grid gap-6 ${gridView === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2'}`}>
-            {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🛋️</div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">No Products Found</h3>
-            <p className="text-gray-400">Try a different category or search term</p>
-          </div>
-        ) : (
-          <div className={`grid gap-6 ${gridView === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2'}`}>
-            {products.map((product, idx) => (
-              <ProductCard key={product._id} product={product} index={idx} />
-            ))}
-          </div>
-        )}
-
-        {products.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
+        {/* Header */}
+        <div className="text-center mb-12 sm:mb-16">
+          <motion.span
+            className="section-label"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mt-12"
+            transition={{ duration: 0.5 }}
           >
-            <p className="text-gray-500 text-sm">
-              Showing <span className="font-semibold text-primary-600">{products.length}</span> products
+            Our Portfolio
+          </motion.span>
+
+          <motion.h2
+            className="section-title mt-3"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            Completed Projects
+          </motion.h2>
+
+          <motion.p
+            className="section-subtitle mt-4"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            Explore our recently completed custom furniture projects for bungalows, offices, and showrooms
+          </motion.p>
+        </div>
+
+        {/* Category Filter Tabs */}
+        <motion.div
+          className="flex overflow-x-auto gap-2 mb-10 sm:mb-12 pb-2 scrollbar-hide sm:justify-center"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <button
+            onClick={() => setActiveCategory('all')}
+            className={
+              activeCategory === 'all' ? 'category-pill-active' : 'category-pill'
+            }
+          >
+            All Projects
+          </button>
+
+          {categories.map((cat) => {
+            const catName = typeof cat === 'string' ? cat : cat.name || '';
+            return (
+              <button
+                key={catName}
+                onClick={() => setActiveCategory(catName)}
+                className={
+                  activeCategory === catName
+                    ? 'category-pill-active'
+                    : 'category-pill'
+                }
+              >
+                {catName}
+              </button>
+            );
+          })}
+        </motion.div>
+
+        {/* Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <motion.div
+            className="text-center py-20"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="w-16 h-16 rounded-full bg-dark-800 border border-white/[0.06] flex items-center justify-center mx-auto mb-5">
+              <svg
+                className="w-7 h-7 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
+                />
+              </svg>
+            </div>
+            <p className="text-gray-400 text-lg font-display">
+              No projects found in this category
             </p>
+            <p className="text-gray-500 text-sm mt-2">
+              Try selecting a different category above
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))}
+            </AnimatePresence>
           </motion.div>
         )}
       </div>
     </section>
   );
-}
+};
+
+export default ProductSection;
