@@ -81,16 +81,26 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
   };
 
   if (pdfPath) {
-    const fullPath = path.resolve(__dirname, '..', pdfPath.replace(/^\//, ''));
-    if (fs.existsSync(fullPath)) {
+    if (pdfPath.startsWith('data:application/pdf;base64,')) {
+      const base64Data = pdfPath.split(';base64,').pop();
       mailOptions.attachments = [
         {
-          filename: 'price.pdf',
-          path: fullPath
+          filename: 'brochure.pdf',
+          content: Buffer.from(base64Data, 'base64')
         }
       ];
     } else {
-      console.warn('⚠️ PDF attachment not found at path:', fullPath);
+      const fullPath = path.resolve(__dirname, '..', pdfPath.replace(/^\//, ''));
+      if (fs.existsSync(fullPath)) {
+        mailOptions.attachments = [
+          {
+            filename: 'price.pdf',
+            path: fullPath
+          }
+        ];
+      } else {
+        console.warn('⚠️ PDF attachment not found at path:', fullPath);
+      }
     }
   }
 

@@ -94,6 +94,15 @@ function Sidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
   );
 }
 
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 // ───────────────── Image Uploader ─────────────────
 function ImageUploader({ onUploaded, existing = [], onDelete }) {
   const [uploading, setUploading] = useState(false);
@@ -101,14 +110,13 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
   const onDrop = useCallback(async (acceptedFiles) => {
     if (!acceptedFiles.length) return;
     setUploading(true);
-    const formData = new FormData();
-    acceptedFiles.forEach((f) => formData.append('images', f));
     try {
-      const res = await uploadImages(formData);
-      toast.success(`${res.data.urls.length} image(s) uploaded!`);
-      onUploaded(res.data.urls);
-    } catch {
-      toast.error('Upload failed');
+      const promises = acceptedFiles.map(fileToBase64);
+      const base64Urls = await Promise.all(promises);
+      toast.success(`${base64Urls.length} image(s) loaded!`);
+      onUploaded(base64Urls);
+    } catch (err) {
+      toast.error('Failed to read files');
     } finally {
       setUploading(false);
     }
@@ -1180,15 +1188,19 @@ function SettingsTab() {
       toast.error('Please upload a PDF file only');
       return;
     }
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('PDF file size must be less than 12MB');
+      return;
+    }
 
     setUploadingPdf(true);
-    const formData = new FormData();
-    formData.append('pdf', file);
     try {
-      const res = await uploadQuotationPdf(formData);
-      setConfig(prev => ({ ...prev, pdfUrl: res.data.pdfUrl }));
+      const base64Pdf = await fileToBase64(file);
+      const updatedConfig = { ...config, pdfUrl: base64Pdf };
+      await updateEmailConfig(updatedConfig);
+      setConfig(updatedConfig);
       toast.success('PDF Brochure uploaded successfully!');
-    } catch {
+    } catch (err) {
       toast.error('Brochure upload failed');
     } finally {
       setUploadingPdf(false);
