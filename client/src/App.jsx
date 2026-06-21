@@ -6,8 +6,6 @@ const HomePage = lazy(() => import('./pages/HomePage'));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
-const UserLoginPage = lazy(() => import('./pages/UserLoginPage'));
-const UserRegisterPage = lazy(() => import('./pages/UserRegisterPage'));
 
 function ProtectedRoute({ children }) {
   const { isAdmin } = useAuth();
@@ -29,8 +27,6 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/project/:id" element={<ProjectDetailPage />} />
-        <Route path="/login" element={<UserLoginPage />} />
-        <Route path="/register" element={<UserRegisterPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route
           path="/admin"

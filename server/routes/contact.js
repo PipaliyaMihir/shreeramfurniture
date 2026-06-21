@@ -75,6 +75,7 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
   const mailOptions = {
     from: `"Shree Ram Furniture" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@shreeramfurniture.com'}>`,
     to: toEmail,
+    replyTo: process.env.SMTP_USER || 'mpipaliya550@rku.ac.in',
     subject: subject,
     text: textBody,
   };
@@ -137,9 +138,23 @@ router.post('/quotation', async (req, res) => {
       personalizedBody = personalizedBody.replace('Hello', `Hello ${name}`);
     }
 
-    // Send email in the background
+    // Send auto-reply email to the client in the background
     sendAutomatedEmail(email, config.subject, personalizedBody, config.pdfUrl)
-      .catch(err => console.error('Error sending auto-reply email:', err));
+      .catch(err => console.error('Error sending auto-reply email to client:', err));
+
+    // Send notification email to the admin in the background
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER || 'mpipaliya550@rku.ac.in';
+    const adminSubject = `New Quotation Request from ${name}`;
+    const adminBody = `You have received a new quotation request on Shree Ram Furniture website.\n\n` +
+      `Client Details:\n` +
+      `- Name: ${name}\n` +
+      `- Email: ${email}\n` +
+      `- Phone: ${phone || 'N/A'}\n\n` +
+      `Message/Requirements:\n${message}\n\n` +
+      `Best regards,\nShree Ram Furniture System`;
+
+    sendAutomatedEmail(adminEmail, adminSubject, adminBody)
+      .catch(err => console.error('Error sending admin notification email:', err));
 
     res.status(201).json({ message: 'Quotation request submitted successfully!', quotation });
   } catch (error) {

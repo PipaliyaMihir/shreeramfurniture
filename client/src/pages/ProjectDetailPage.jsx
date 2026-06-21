@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, X, Star, ExternalLink, LogIn, Send, MessageSquare, UserCircle2 } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, X, Star, ExternalLink, Send, MessageSquare } from 'lucide-react';
 import { getProduct, getProducts, rateProduct } from '../api';
-import { useAuth } from '../context/AuthContext';
 import toast, { Toaster } from 'react-hot-toast';
 
 const getImageUrl = (img) => {
@@ -33,8 +32,9 @@ function StarRating({ rating = 4.5, size = 18 }) {
   );
 }
 
-// ── Review Form for logged-in users ──────────────────────
-function ReviewForm({ projectId, currentUser, onSubmitSuccess }) {
+// ── Review Form ──────────────────────────────────────────
+function ReviewForm({ projectId, onSubmitSuccess }) {
+  const [name, setName] = useState('');
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [message, setMessage] = useState('');
@@ -43,16 +43,17 @@ function ReviewForm({ projectId, currentUser, onSubmitSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!name.trim()) { toast.error('Please enter your name'); return; }
     if (!rating) { toast.error('Please select a star rating'); return; }
     if (!message.trim()) { toast.error('Please write a review message'); return; }
     setSubmitting(true);
     try {
       const res = await rateProduct(projectId, {
         rating,
-        name: currentUser.name,
+        name: name.trim(),
         message: message.trim(),
       });
-      toast.success(`Thank you, ${currentUser.name}! Your review has been submitted.`);
+      toast.success(`Thank you, ${name.trim()}! Your review has been submitted.`);
       setSubmitted(true);
       if (onSubmitSuccess) onSubmitSuccess(res.data);
     } catch (err) {
@@ -69,22 +70,24 @@ function ReviewForm({ projectId, currentUser, onSubmitSuccess }) {
           <Star size={22} className="fill-green-400 text-green-400" />
         </div>
         <p className="text-green-400 font-semibold font-display">Review Submitted!</p>
-        <p className="text-xs text-gray-500">Thank you, {currentUser.name}. Your review helps others.</p>
+        <p className="text-xs text-gray-500">Thank you, {name.trim()}. Your review helps others.</p>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Auto-filled name */}
-      <div className="flex items-center gap-3 bg-dark-900/50 border border-dark-600/15 rounded-xl px-4 py-3">
-        <div className="w-8 h-8 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center font-bold text-dark-900 text-sm flex-shrink-0">
-          {currentUser.name?.[0]?.toUpperCase() || 'U'}
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-dark-400">{currentUser.name}</p>
-          <p className="text-xs text-gray-500">Review Author</p>
-        </div>
+      {/* Name Input */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Your Name</p>
+        <input
+          type="text"
+          placeholder="Enter your name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="input-field-dark text-sm w-full"
+          required
+        />
       </div>
 
       {/* Star selector */}
@@ -161,7 +164,7 @@ function ReviewsList({ reviews = [] }) {
     );
   }
   return (
-    <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
       {[...reviews].reverse().map((r, i) => (
         <div key={r._id || i} className="flex gap-3 bg-dark-900/40 rounded-xl p-3.5 border border-dark-600/10">
           <div className="w-8 h-8 bg-gradient-to-br from-dark-600 to-dark-700 rounded-full flex items-center justify-center font-bold text-gold-400 text-sm flex-shrink-0">
@@ -189,70 +192,7 @@ function ReviewsList({ reviews = [] }) {
   );
 }
 
-// ── Review Card (sidebar) ──────────────────────────────────
-function ReviewCard({ projectId, project, onReviewSuccess }) {
-  const { currentUser, isLoggedIn } = useAuth();
-  const navigate = useNavigate();
-  const location = typeof window !== 'undefined' ? window.location.pathname : '/';
 
-  return (
-    <div className="card p-6 space-y-5">
-      {/* Current Rating */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Project Rating</p>
-        <div className="flex items-center gap-2">
-          <StarRating rating={project.rating || 5} />
-          <span className="text-xs text-gray-500 font-semibold">({project.reviewCount || 0} reviews)</span>
-        </div>
-      </div>
-
-      <div className="border-t border-white/[0.06] pt-5">
-        {isLoggedIn ? (
-          <>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-              <MessageSquare size={13} />
-              Write a Review
-            </p>
-            <ReviewForm
-              projectId={projectId}
-              currentUser={currentUser}
-              onSubmitSuccess={onReviewSuccess}
-            />
-          </>
-        ) : (
-          <div className="text-center space-y-3 py-2">
-            <UserCircle2 size={32} className="mx-auto text-gray-600" />
-            <p className="text-sm text-gray-400 font-medium">Login to rate and review this project</p>
-            <Link
-              to="/login"
-              state={{ from: `/project/${projectId}` }}
-              className="btn-primary w-full justify-center py-2.5 text-sm flex items-center gap-2"
-            >
-              <LogIn size={14} />
-              Login to Review
-            </Link>
-            <p className="text-xs text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" state={{ from: `/project/${projectId}` }} className="text-gold-500 hover:text-gold-400">
-                Sign up free
-              </Link>
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Reviews list */}
-      {(project.reviews || []).length > 0 && (
-        <div className="border-t border-white/[0.06] pt-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-            Customer Reviews ({project.reviewCount || (project.reviews || []).length})
-          </p>
-          <ReviewsList reviews={project.reviews} />
-        </div>
-      )}
-    </div>
-  );
-}
 
 function SkeletonPage() {
   return (
@@ -473,17 +413,30 @@ export default function ProjectDetailPage() {
             </div>
           </motion.div>
 
-          {/* Right — Review Card */}
+          {/* Right — Rating Summary */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <ReviewCard
-              projectId={project._id || project.id}
-              project={project}
-              onReviewSuccess={(updatedProject) => setProject(updatedProject)}
-            />
+            <div className="card p-6 space-y-6">
+              <div>
+                <p className="text-xs font-semibold text-gray-405 uppercase tracking-widest mb-2">Project Rating</p>
+                <div className="flex items-center gap-2">
+                  <StarRating rating={project.rating || 5} />
+                  <span className="text-xs text-gray-500 font-semibold">({project.reviewCount || 0} reviews)</span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const el = document.getElementById('reviews-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="btn-outline w-full justify-center py-3 text-sm"
+              >
+                Read Customer Reviews
+              </button>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -551,6 +504,30 @@ export default function ProjectDetailPage() {
           </div>
         </section>
       )}
+
+      {/* ───── Reviews & Ratings Section ───── */}
+      <section id="reviews-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 md:pb-24 border-t border-white/[0.06] pt-12 md:pt-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-16">
+          {/* Left — Reviews List */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="section-label">Reviews</h2>
+            <h3 className="section-title mb-6">Customer Feedback ({project.reviews?.length || 0})</h3>
+            <ReviewsList reviews={project.reviews} />
+          </div>
+
+          {/* Right — Write a Review Form */}
+          <div className="card p-6 self-start w-full">
+            <h4 className="text-sm font-semibold text-white uppercase tracking-widest mb-4 flex items-center gap-1.5">
+              <MessageSquare size={16} className="text-gold-500" />
+              Write a Review
+            </h4>
+            <ReviewForm
+              projectId={project._id || project.id}
+              onSubmitSuccess={(updatedProject) => setProject(updatedProject)}
+            />
+          </div>
+        </div>
+      </section>
 
       {/* ───── Fullscreen Lightbox ───── */}
       <AnimatePresence>

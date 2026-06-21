@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowRight, LogIn, UserPlus, LogOut, User, ChevronDown } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import logoImg from '../assets/logo.png';
-import { useAuth } from '../context/AuthContext';
 
 const navLinks = [
   { name: 'Home', href: '#home' },
@@ -14,29 +13,15 @@ const navLinks = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, isLoggedIn, userLogout } = useAuth();
-  const dropdownRef = useRef(null);
 
-  useEffect(() => { setMobileOpen(false); setUserMenuOpen(false); }, [location]);
+  useEffect(() => { setMobileOpen(false); }, [location]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   const handleSmoothScroll = (e, href) => {
     if (href.startsWith('#')) {
@@ -59,11 +44,6 @@ export default function Navbar() {
         navigate('/' + href);
       }
     }
-  };
-
-  const handleLogout = () => {
-    userLogout();
-    setUserMenuOpen(false);
   };
 
   return (
@@ -92,62 +72,8 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Desktop Right — Auth buttons */}
+          {/* Desktop Right — CTA */}
           <div className="hidden lg:flex items-center gap-3">
-            {isLoggedIn ? (
-              // Logged-in user avatar + dropdown
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-dark-800 border border-dark-600/30 hover:border-gold-400/30 transition-all duration-200 group"
-                >
-                  <div className="w-7 h-7 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center font-display font-bold text-dark-900 text-xs">
-                    {currentUser?.name?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                  <span className="text-sm font-medium text-dark-400 max-w-[100px] truncate">{currentUser?.name}</span>
-                  <ChevronDown size={14} className={`text-gray-500 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                <AnimatePresence>
-                  {userMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-48 bg-dark-800 border border-dark-600/30 rounded-2xl shadow-card-hover overflow-hidden"
-                    >
-                      <div className="p-3 border-b border-dark-600/10">
-                        <p className="text-xs font-semibold text-dark-400 truncate">{currentUser?.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{currentUser?.email}</p>
-                      </div>
-                      <div className="p-1">
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left"
-                        >
-                          <LogOut size={14} />
-                          Sign Out
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              // Not logged in — show Login + Sign Up
-              <>
-                <Link to="/login" className="btn-outline px-4 py-2 text-sm flex items-center gap-1.5">
-                  <LogIn size={14} />
-                  Login
-                </Link>
-                <Link to="/register" className="btn-primary px-4 py-2 text-sm flex items-center gap-1.5">
-                  <UserPlus size={14} />
-                  Sign Up
-                </Link>
-              </>
-            )}
-
             <a
               href="#contact"
               onClick={(e) => handleSmoothScroll(e, '#contact')}
@@ -207,38 +133,6 @@ export default function Navbar() {
               ))}
 
               <div className="pt-4 border-t border-dark-600/30 space-y-2">
-                {isLoggedIn ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-dark-800 border border-dark-600/20">
-                      <div className="w-8 h-8 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center font-bold text-dark-900 text-sm">
-                        {currentUser?.name?.[0]?.toUpperCase() || 'U'}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-dark-400">{currentUser?.name}</p>
-                        <p className="text-xs text-gray-500">{currentUser?.email}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors border border-red-500/20"
-                    >
-                      <LogOut size={14} />
-                      Sign Out
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <Link to="/login" className="flex-1 btn-outline justify-center py-2.5 text-sm flex items-center gap-1.5">
-                      <LogIn size={13} />
-                      Login
-                    </Link>
-                    <Link to="/register" className="flex-1 btn-primary justify-center py-2.5 text-sm flex items-center gap-1.5">
-                      <UserPlus size={13} />
-                      Sign Up
-                    </Link>
-                  </div>
-                )}
-
                 <a
                   href="#contact"
                   onClick={(e) => handleSmoothScroll(e, '#contact')}

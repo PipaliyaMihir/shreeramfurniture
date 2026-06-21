@@ -6,7 +6,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import {
   LayoutDashboard, Tag, Image, LogOut, Menu, X,
   Plus, Pencil, Trash2, Upload, Check, Star, Eye, EyeOff,
-  Search, ArrowUpRight, Building2, Mail, FileText, Users
+  Search, ArrowUpRight, Building2, Mail, FileText
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -14,7 +14,7 @@ import {
   getCategories, createCategory, deleteCategory,
   getAllHeroSlides, createHeroSlide, updateHeroSlide, deleteHeroSlide,
   uploadImages, getEmailConfig, updateEmailConfig, uploadQuotationPdf, getQuotations, deleteQuotation,
-  getHeroConfig, updateHeroConfig, getUsers
+  getHeroConfig, updateHeroConfig
 } from '../api';
 
 // ───────────────── Sidebar ─────────────────
@@ -27,7 +27,6 @@ function Sidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
     { id: 'categories', label: 'Categories', icon: Tag },
     { id: 'hero', label: 'Hero Slides', icon: Image },
     { id: 'quotations', label: 'Quotations', icon: FileText },
-    { id: 'users', label: 'Users', icon: Users },
     { id: 'settings', label: 'Email Settings', icon: Mail },
   ];
 
@@ -1288,113 +1287,7 @@ function SettingsTab() {
   );
 }
 
-// ───────────────── Users Tab ─────────────────
-function UsersTab() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const res = await getUsers();
-        setUsers(res.data || []);
-      } catch {
-        toast.error('Failed to load users');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-  }, []);
-
-  const filtered = users.filter(u =>
-    u.name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const roleBadge = (role) => {
-    const colors = {
-      admin: 'bg-gold-400/15 text-gold-400 border border-gold-400/20',
-      superadmin: 'bg-primary-500/15 text-primary-400 border border-primary-400/20',
-      user: 'bg-dark-600/30 text-gray-400 border border-white/10',
-    };
-    return (
-      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${colors[role] || colors.user}`}>
-        {role || 'user'}
-      </span>
-    );
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-xl font-bold font-display text-white">Registered Users</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{users.length} total users</p>
-        </div>
-        <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search by name or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-dark-800 border border-white/10 text-white text-sm pl-9 pr-4 py-2 rounded-xl focus:outline-none focus:border-gold-400/40 placeholder-gray-600 w-64"
-          />
-        </div>
-      </div>
-
-      <div className="card overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-3 border-gold-400 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <Users size={36} className="mx-auto text-gray-600 mb-3" />
-            <p className="text-gray-500 text-sm">{search ? 'No users match your search' : 'No registered users yet'}</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/[0.06]">
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((u, i) => (
-                  <tr key={u._id || i} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center font-bold text-dark-900 text-sm flex-shrink-0">
-                          {u.name?.[0]?.toUpperCase() || '?'}
-                        </div>
-                        <span className="font-semibold text-sm text-white">{u.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-gray-400">{u.email}</td>
-                    <td className="px-5 py-4">{roleBadge(u.role)}</td>
-                    <td className="px-5 py-4 text-sm text-gray-500">
-                      {u.createdAt
-                        ? new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ───────────────── Main Admin Page ─────────────────
 export default function AdminPage() {
@@ -1479,7 +1372,6 @@ export default function AdminPage() {
                 {active === 'categories' && <CategoriesTab categories={categories} onRefresh={fetchAll} />}
                 {active === 'hero' && <HeroTab slides={slides} onRefresh={fetchAll} />}
                 {active === 'quotations' && <QuotationsTab />}
-                {active === 'users' && <UsersTab />}
                 {active === 'settings' && <SettingsTab />}
               </motion.div>
             </AnimatePresence>

@@ -62,8 +62,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// @POST /api/products/:id/rate — submit a review (requires login)
-router.post('/:id/rate', protect, async (req, res) => {
+// @POST /api/products/:id/rate — submit a review
+router.post('/:id/rate', async (req, res) => {
   try {
     const { rating, name, message } = req.body;
 
@@ -84,7 +84,7 @@ router.post('/:id/rate', protect, async (req, res) => {
       name: name.trim(),
       rating: ratingNum,
       message: message.trim(),
-      userId: req.user._id ? String(req.user._id) : null,
+      userId: (req.user && req.user._id) ? String(req.user._id) : null,
       createdAt: new Date(),
     };
 
