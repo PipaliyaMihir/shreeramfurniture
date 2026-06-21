@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Star, Award, Users, Building2, Layers } from 'lucide-react';
+import { getProducts } from '../api';
 
 const IMAGES = [
   'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=600&q=80',
@@ -33,6 +34,49 @@ const fadeUp = {
 };
 
 export default function AboutSection() {
+  const [ratingStats, setRatingStats] = useState({ average: 4.9, totalCount: 124 });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await getProducts({ limit: 100 });
+        const productsData = res.data?.products || res.data || [];
+        if (productsData.length > 0) {
+          let totalReviews = 0;
+          let weightedRatingSum = 0;
+          let fallbackRatingSum = 0;
+
+          productsData.forEach((p) => {
+            const count = p.reviewCount || 0;
+            const rat = p.rating || 5;
+            fallbackRatingSum += rat;
+            if (count > 0) {
+              totalReviews += count;
+              weightedRatingSum += rat * count;
+            }
+          });
+
+          let finalAverage = 4.9;
+          if (totalReviews > 0) {
+            finalAverage = weightedRatingSum / totalReviews;
+          } else if (productsData.length > 0) {
+            finalAverage = fallbackRatingSum / productsData.length;
+          }
+
+          const displayReviewsCount = totalReviews > 0 ? totalReviews : 124;
+
+          setRatingStats({
+            average: Math.round(finalAverage * 10) / 10,
+            totalCount: displayReviewsCount,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load rating stats in AboutSection:', err);
+      }
+    }
+    fetchStats();
+  }, []);
+
   return (
     <section id="about" className="relative overflow-hidden bg-dark-900 py-24 lg:py-32">
       {/* Decorative background glow */}
@@ -82,9 +126,9 @@ export default function AboutSection() {
                 ))}
               </div>
               <p className="mt-2 font-display text-2xl font-bold text-dark-400">
-                4.9<span className="text-base font-normal text-gray-400">/5.0</span>
+                {ratingStats.average.toFixed(1)}<span className="text-base font-normal text-gray-400">/5.0</span>
               </p>
-              <p className="mt-0.5 text-xs text-gray-500">Client Satisfaction</p>
+              <p className="mt-0.5 text-xs text-gray-500">{ratingStats.totalCount} Reviews</p>
             </motion.div>
           </motion.div>
 
