@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, LogIn, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,146 +28,140 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4 relative overflow-hidden">
       <Toaster
         position="top-right"
         toastOptions={{
           style: {
-            background: '#1a1a24',
-            color: '#e5e5e5',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: '#FAF8F5',
+            color: '#2E2724',
+            border: '1px solid rgba(46, 39, 36, 0.08)',
             borderRadius: '12px',
           },
         }}
       />
 
-      {/* ── Background Glowing Orbs (Premium glassmorphism effect) ── */}
-      <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-gold-500/10 rounded-full blur-[100px] animate-pulse pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[350px] h-[350px] bg-primary-600/10 rounded-full blur-[100px] animate-pulse pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gold-600/[0.03] rounded-full blur-[130px] pointer-events-none" />
+      {/* ── Architectural Dotted Grid Background ── */}
+      <div className="absolute inset-0 bg-[radial-gradient(#EDE6D4_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-50 pointer-events-none" />
+
+      {/* Decorative Warm Accent Blur */}
+      <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-gold-200/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-primary-100/30 rounded-full blur-[100px] pointer-events-none" />
 
       <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.96 }}
+        initial={{ opacity: 0, y: 30, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="relative w-full max-w-md z-10"
       >
-        {/* Glow border wrapper */}
-        <div className="relative rounded-3xl p-[1px] bg-gradient-to-b from-white/[0.08] via-white/[0.02] to-gold-400/[0.12] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)]">
+        {/* Elegant Card Container */}
+        <div className="bg-dark-800 border border-dark-600/35 rounded-3xl shadow-card overflow-hidden">
           
-          {/* Card Container */}
-          <div className="bg-dark-900/70 backdrop-blur-2xl rounded-[23px] overflow-hidden">
-            
-            {/* Header section with gradient line */}
-            <div className="p-8 text-center relative border-b border-white/[0.04]">
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-24 h-[2px] bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
+          {/* Header Section */}
+          <div className="p-8 text-center border-b border-dark-600/10 bg-dark-900/20">
+            <div className="flex justify-center items-center gap-2.5 mb-3">
+              <div className="w-2.5 h-2.5 bg-gold-400 rounded-sm" />
+              <span className="font-display text-[10px] font-bold text-gray-500 uppercase tracking-[0.25em]">Shree Ram Furniture</span>
+            </div>
+            <h1 className="font-display text-2xl font-bold text-dark-400 tracking-tight">
+              Admin Portal
+            </h1>
+            <p className="text-gray-500 text-xs mt-1">
+              Please enter your credentials to access the panel
+            </p>
+          </div>
+
+          {/* Form Body */}
+          <div className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Premium Icon Ring */}
-              <div className="w-16 h-16 bg-gradient-to-br from-gold-500/20 to-gold-600/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-gold-400/20 shadow-[0_0_20px_rgba(212,175,55,0.15)]">
-                <ShieldCheck size={32} className="text-gold-400" />
-              </div>
-              <h1 className="font-display text-2xl font-bold text-white tracking-tight mb-1">
-                Admin Panel
-              </h1>
-              <p className="text-gray-400 text-xs tracking-wider uppercase">
-                Shree Ram Furniture
-              </p>
-            </div>
-
-            {/* Form body */}
-            <div className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                
-                {/* Email field */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider text-left">
-                    Email Address
-                  </label>
-                  <div className="relative group">
-                    <Mail
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-gold-400 transition-colors"
-                    />
-                    <input
-                      id="admin-email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@shreeramfurniture.com"
-                      className="w-full bg-dark-950/60 border border-white/[0.06] rounded-xl pl-11 pr-4 py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold-400/50 focus:ring-1 focus:ring-gold-400/30 transition-all duration-300 shadow-inner"
-                    />
-                  </div>
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest text-left">
+                  Email Address
+                </label>
+                <div className="relative group">
+                  <Mail
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gold-400 transition-colors"
+                  />
+                  <input
+                    id="admin-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@shreeramfurniture.com"
+                    className="input-field pl-11"
+                  />
                 </div>
-
-                {/* Password field */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider text-left">
-                      Password
-                    </label>
-                  </div>
-                  <div className="relative group">
-                    <Lock
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-gold-400 transition-colors"
-                    />
-                    <input
-                      id="admin-password"
-                      type={showPass ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-dark-950/60 border border-white/[0.06] rounded-xl pl-11 pr-11 py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold-400/50 focus:ring-1 focus:ring-gold-400/30 transition-all duration-300 shadow-inner"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPass(!showPass)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                    >
-                      {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Sign In Button */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full btn-primary justify-center py-4 text-base disabled:opacity-75 disabled:cursor-not-allowed group relative overflow-hidden transition-all duration-300 font-semibold shadow-[0_4px_20px_rgba(212,175,55,0.15)] hover:shadow-[0_4px_30px_rgba(212,175,55,0.3)]"
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-dark-900 border-t-transparent rounded-full animate-spin" />
-                      <span>Verifying...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 justify-center">
-                      <LogIn size={18} className="transition-transform group-hover:translate-x-0.5" />
-                      <span>Sign In to Panel</span>
-                    </div>
-                  )}
-                </button>
-              </form>
-
-              {/* Back Link */}
-              <div className="text-center mt-8">
-                <a
-                  href="/"
-                  className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-gold-400 transition-all group/back"
-                >
-                  <ArrowLeft size={14} className="transition-transform group-hover/back:-translate-x-0.5" />
-                  Back to Homepage
-                </a>
               </div>
 
+              {/* Password Field */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest text-left">
+                  Password
+                </label>
+                <div className="relative group">
+                  <Lock
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gold-400 transition-colors"
+                  />
+                  <input
+                    id="admin-password"
+                    type={showPass ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="input-field pl-11 pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dark-400 transition-colors"
+                  >
+                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Sign In Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full btn-primary justify-center py-3.5 text-sm disabled:opacity-75 disabled:cursor-not-allowed group relative overflow-hidden transition-all duration-300 font-semibold shadow-md"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Verifying...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 justify-center">
+                    <LogIn size={16} className="transition-transform group-hover:translate-x-0.5" />
+                    <span>Sign In to Panel</span>
+                  </div>
+                )}
+              </button>
+            </form>
+
+            {/* Back to Homepage */}
+            <div className="text-center mt-8">
+              <a
+                href="/"
+                className="inline-flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-gold-500 transition-colors group/back"
+              >
+                <ArrowLeft size={14} className="transition-transform group-hover/back:-translate-x-0.5" />
+                Back to Homepage
+              </a>
             </div>
+
           </div>
         </div>
 
-        {/* Footer copyright */}
-        <p className="text-center text-gray-600 text-[10px] uppercase tracking-widest mt-6">
+        {/* Footer Copyright */}
+        <p className="text-center text-gray-500 text-[10px] uppercase tracking-widest mt-6">
           © {new Date().getFullYear()} Shree Ram Furniture. All rights reserved.
         </p>
       </motion.div>

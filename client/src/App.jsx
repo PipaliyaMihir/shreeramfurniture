@@ -6,27 +6,31 @@ const HomePage = lazy(() => import('./pages/HomePage'));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const UserLoginPage = lazy(() => import('./pages/UserLoginPage'));
+const UserRegisterPage = lazy(() => import('./pages/UserRegisterPage'));
 
 function ProtectedRoute({ children }) {
   const { isAdmin } = useAuth();
   return isAdmin ? children : <Navigate to="/admin/login" replace />;
 }
 
+const Loader = () => (
+  <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-gold-400/30 border-t-gold-400 rounded-full animate-spin" />
+      <p className="text-gray-500 text-sm font-display font-medium">Loading...</p>
+    </div>
+  </div>
+);
+
 function AppRoutes() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-dark-900 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-gold-400/30 border-t-gold-400 rounded-full animate-spin" />
-            <p className="text-gray-500 text-sm font-display font-medium">Loading...</p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<Loader />}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/project/:id" element={<ProjectDetailPage />} />
+        <Route path="/login" element={<UserLoginPage />} />
+        <Route path="/register" element={<UserRegisterPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route
           path="/admin"

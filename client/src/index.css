@@ -95,6 +95,15 @@
            transition-all duration-200;
   }
 
+  /* Dark variant for use on dark backgrounds */
+  .input-field-dark {
+    @apply w-full px-4 py-3 rounded-xl text-sm font-medium
+           bg-dark-900/60 border border-dark-600/30 text-dark-400
+           placeholder-gray-600
+           focus:border-gold-400/50 focus:ring-2 focus:ring-gold-400/10 focus:outline-none
+           transition-all duration-200;
+  }
+
   /* --- Badges --- */
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold

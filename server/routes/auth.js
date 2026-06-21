@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const { protect } = require('../middleware/auth');
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET || 'ShreeRamFurniture_SuperSecret_JWT_2024_Key_Fallback', { expiresIn: '7d' });
@@ -26,7 +27,6 @@ router.post('/login', async (req, res) => {
     // Auto-create default admin if it doesn't exist and credentials match
     if (!user && cleanEmail === adminEmail && cleanPassword === adminPassword) {
       user = await User.create({
-        _id: '60c72b2f9b1d8a23c4d5e6f7',
         name: 'Shree Ram Admin',
         email: adminEmail,
         password: adminPassword,
@@ -52,18 +52,47 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// @POST /api/auth/register (only for initial setup)
+// @POST /api/auth/register — public user registration
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: 'User already exists' });
-    const user = await User.create({ name, email, password, role: 'admin' });
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const exists = await User.findOne({ email: email.trim().toLowerCase() });
+    if (exists) return res.status(400).json({ message: 'An account with this email already exists' });
+
+    const user = await User.create({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      role: 'user',
+    });
+
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role,
       token: generateToken(user._id),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @GET /api/auth/me — get current logged-in user profile
+router.get('/me', protect, async (req, res) => {
+  try {
+    res.json({
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

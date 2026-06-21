@@ -21,6 +21,36 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @GET /api/products/reviews/recent — get latest reviews across all products
+// MUST be placed BEFORE /:id to avoid conflict
+router.get('/reviews/recent', async (req, res) => {
+  try {
+    const products = await Product.find({}).sort({ createdAt: -1 }).limit(50);
+    // Collect all reviews from all products
+    const allReviews = [];
+    products.forEach(product => {
+      if (product.reviews && product.reviews.length > 0) {
+        product.reviews.forEach(review => {
+          allReviews.push({
+            _id: review._id,
+            name: review.name,
+            rating: review.rating,
+            message: review.message,
+            projectName: product.name,
+            projectId: product._id,
+            createdAt: review.createdAt,
+          });
+        });
+      }
+    });
+    // Sort by most recent and return top 6
+    allReviews.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    res.json(allReviews.slice(0, 6));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @GET /api/products/:id
 router.get('/:id', async (req, res) => {
   try {
@@ -32,10 +62,15 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// @POST /api/products/:id/rate (public)
-router.post('/:id/rate', async (req, res) => {
+// @POST /api/products/:id/rate — submit a review (requires login)
+router.post('/:id/rate', protect, async (req, res) => {
   try {
-    const { rating } = req.body;
+    const { rating, name, message } = req.body;
+
+    if (!rating || !name || !message) {
+      return res.status(400).json({ message: 'Rating, name, and message are required' });
+    }
+
     const ratingNum = Number(rating);
     if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
       return res.status(400).json({ message: 'Rating must be a number between 1 and 5' });
@@ -44,17 +79,28 @@ router.post('/:id/rate', async (req, res) => {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    const currentCount = product.reviewCount || 0;
-    const currentRating = product.rating || 5;
+    // Add the new review
+    const newReview = {
+      name: name.trim(),
+      rating: ratingNum,
+      message: message.trim(),
+      userId: req.user._id ? String(req.user._id) : null,
+      createdAt: new Date(),
+    };
 
-    const newCount = currentCount + 1;
-    const newRating = ((currentRating * currentCount) + ratingNum) / newCount;
+    // Build updated reviews list for rating calculation
+    const currentReviews = product.reviews || [];
+    const updatedReviews = [...currentReviews, newReview];
+
+    // Recalculate average rating from all reviews
+    const avgRating = updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length;
 
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
       {
-        rating: Math.round(newRating * 10) / 10,
-        reviewCount: newCount,
+        $push: { reviews: newReview },
+        rating: Math.round(avgRating * 10) / 10,
+        reviewCount: updatedReviews.length,
       },
       { new: true }
     );
