@@ -13,7 +13,7 @@ import {
   getProducts, createProduct, updateProduct, deleteProduct,
   getCategories, createCategory, deleteCategory,
   getAllHeroSlides, createHeroSlide, updateHeroSlide, deleteHeroSlide,
-  uploadImages, getEmailConfig, updateEmailConfig, uploadQuotationPdf, getQuotations,
+  uploadImages, getEmailConfig, updateEmailConfig, uploadQuotationPdf, getQuotations, deleteQuotation,
   getHeroConfig, updateHeroConfig
 } from '../api';
 
