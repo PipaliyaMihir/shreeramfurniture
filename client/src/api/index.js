@@ -67,3 +67,4 @@ export const updateEmailConfig = (data) => API.put('/contact/config', data);
 export const uploadQuotationPdf = (formData) =>
   API.post('/contact/config/pdf', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const getQuotations = () => API.get('/contact/quotations');
+export const deleteQuotation = (id) => API.delete(`/contact/quotations/${id}`);

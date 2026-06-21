@@ -211,4 +211,15 @@ router.get('/quotations', protect, async (req, res) => {
   }
 });
 
+// @DELETE /api/contact/quotations/:id (admin)
+router.delete('/quotations/:id', protect, async (req, res) => {
+  try {
+    const quotation = await Quotation.findByIdAndDelete(req.params.id);
+    if (!quotation) return res.status(404).json({ message: 'Quotation request not found' });
+    res.json({ message: 'Quotation request deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

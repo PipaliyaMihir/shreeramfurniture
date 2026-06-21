@@ -954,23 +954,105 @@ function HeroTab({ slides, onRefresh }) {
 }
 
 // ───────────────── Quotations Tab ─────────────────
+function QuotationModal({ quotation, onClose }) {
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="modal-content text-left bg-dark-800 border-dark-600/35 max-w-lg w-full"
+      >
+        <div className="flex items-center justify-between p-6 border-b border-dark-600/10">
+          <h2 className="font-display text-xl font-bold text-dark-400">
+            Quotation Request Details
+          </h2>
+          <button onClick={onClose} className="p-2 hover:bg-dark-600/30 text-gray-500 hover:text-dark-400 rounded-lg transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Client Name</label>
+            <p className="text-sm font-semibold text-white bg-dark-900 px-4 py-2.5 rounded-xl border border-dark-600/15">{quotation.name}</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
+              <a href={`mailto:${quotation.email}`} className="block text-sm font-semibold text-gold-400 hover:text-gold-300 transition-colors bg-dark-900 px-4 py-2.5 rounded-xl border border-dark-600/15 truncate block">{quotation.email}</a>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Phone Number</label>
+              <a href={quotation.phone ? `tel:${quotation.phone}` : '#'} className="block text-sm font-semibold text-white bg-dark-900 px-4 py-2.5 rounded-xl border border-dark-600/15 block">{quotation.phone || '—'}</a>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Submitted Date</label>
+            <p className="text-sm font-semibold text-white bg-dark-900 px-4 py-2.5 rounded-xl border border-dark-600/15">
+              {new Date(quotation.createdAt).toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Message / Requirements</label>
+            <div className="text-sm text-gray-300 bg-dark-900 px-4 py-3.5 rounded-xl border border-dark-600/15 min-h-[120px] whitespace-pre-line leading-relaxed">
+              {quotation.message}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 p-6 border-t border-dark-600/15 bg-dark-900/40">
+          <button type="button" onClick={onClose} className="btn-outline flex-1 justify-center py-2.5">Close</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function QuotationsTab() {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedQuote, setSelectedQuote] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const fetchQuotations = async () => {
+    try {
+      const res = await getQuotations();
+      setQuotations(res.data);
+    } catch {
+      toast.error('Failed to load quotation requests');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadQuotations() {
-      try {
-        const res = await getQuotations();
-        setQuotations(res.data);
-      } catch {
-        toast.error('Failed to load quotation requests');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadQuotations();
+    fetchQuotations();
   }, []);
+
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this quotation request?')) return;
+    setDeletingId(id);
+    try {
+      await deleteQuotation(id);
+      toast.success('Quotation request deleted successfully!');
+      setQuotations(prev => prev.filter(q => q._id !== id));
+    } catch {
+      toast.error('Failed to delete quotation request');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -990,21 +1072,25 @@ function QuotationsTab() {
           <table className="w-full">
             <thead className="bg-dark-900/60 border-b border-dark-600/10">
               <tr>
-                {['Client Name', 'Email', 'Phone', 'Requirement / Message', 'Date Submitted'].map((h) => (
+                {['Client Name', 'Email', 'Phone', 'Requirement / Message', 'Date Submitted', 'Actions'].map((h) => (
                   <th key={h} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-4">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-600/10">
               {quotations.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-12 text-gray-500 bg-dark-800">No quotation requests received yet</td></tr>
+                <tr><td colSpan={6} className="text-center py-12 text-gray-500 bg-dark-800">No quotation requests received yet</td></tr>
               ) : (
                 quotations.map((q) => (
-                  <tr key={q._id} className="hover:bg-dark-900/40 transition-colors">
+                  <tr
+                    key={q._id}
+                    onClick={() => setSelectedQuote(q)}
+                    className="hover:bg-dark-900/40 transition-colors cursor-pointer"
+                  >
                     <td className="px-5 py-4 text-sm font-semibold text-dark-400 text-left">{q.name}</td>
                     <td className="px-5 py-4 text-sm text-gray-500 text-left">{q.email}</td>
                     <td className="px-5 py-4 text-sm text-gray-500 text-left">{q.phone || '—'}</td>
-                    <td className="px-5 py-4 text-sm text-gray-500 max-w-[300px] whitespace-pre-line text-left">{q.message}</td>
+                    <td className="px-5 py-4 text-sm text-gray-500 max-w-[200px] truncate text-left">{q.message}</td>
                     <td className="px-5 py-4 text-sm text-gray-500 text-left">
                       {new Date(q.createdAt).toLocaleDateString('en-IN', {
                         year: 'numeric',
@@ -1014,6 +1100,25 @@ function QuotationsTab() {
                         minute: '2-digit'
                       })}
                     </td>
+                    <td className="px-5 py-4 text-left">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedQuote(q)}
+                          className="p-1.5 text-gold-500 hover:bg-gold-400/10 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(e, q._id)}
+                          disabled={deletingId === q._id}
+                          className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                          title="Delete Request"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -1021,6 +1126,15 @@ function QuotationsTab() {
           </table>
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedQuote && (
+          <QuotationModal
+            quotation={selectedQuote}
+            onClose={() => setSelectedQuote(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
