@@ -32,6 +32,39 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// @POST /api/products/:id/rate (public)
+router.post('/:id/rate', async (req, res) => {
+  try {
+    const { rating } = req.body;
+    const ratingNum = Number(rating);
+    if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
+      return res.status(400).json({ message: 'Rating must be a number between 1 and 5' });
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const currentCount = product.reviewCount || 0;
+    const currentRating = product.rating || 5;
+
+    const newCount = currentCount + 1;
+    const newRating = ((currentRating * currentCount) + ratingNum) / newCount;
+
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        rating: Math.round(newRating * 10) / 10,
+        reviewCount: newCount,
+      },
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @POST /api/products (admin)
 router.post('/', protect, async (req, res) => {
   try {

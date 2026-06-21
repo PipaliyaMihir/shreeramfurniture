@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, X, Star, ExternalLink } from 'lucide-react';
-import { getProduct, getProducts } from '../api';
+import { getProduct, getProducts, rateProduct } from '../api';
+import toast, { Toaster } from 'react-hot-toast';
 
 const getImageUrl = (img) => {
   if (!img) return 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80';
@@ -27,6 +28,78 @@ function StarRating({ rating = 4.5 }) {
         />
       ))}
       <span className="ml-2 text-sm text-gray-400 font-medium">{rating.toFixed(1)}</span>
+    </div>
+  );
+}
+
+function InteractiveRating({ projectId, currentRating, reviewCount, onRateSuccess }) {
+  const [hoverRating, setHoverRating] = useState(0);
+  const [hasRated, setHasRated] = useState(() => {
+    return localStorage.getItem(`srf_rated_${projectId}`) === 'true';
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleRate = async (ratingVal) => {
+    if (hasRated || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await rateProduct(projectId, ratingVal);
+      toast.success('Thank you for rating this project!');
+      localStorage.setItem(`srf_rated_${projectId}`, 'true');
+      setHasRated(true);
+      if (onRateSuccess) {
+        onRateSuccess(res.data);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to submit rating.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="card p-6 space-y-4">
+      <div className="text-left">
+        <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Project Rating</p>
+        <div className="flex items-center gap-2">
+          <StarRating rating={currentRating} />
+          <span className="text-xs text-gray-500 font-semibold">({reviewCount} reviews)</span>
+        </div>
+      </div>
+
+      <div className="border-t border-white/[0.06] pt-4">
+        {hasRated ? (
+          <p className="text-xs text-green-400 font-medium flex items-center gap-1.5 justify-center py-1">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            You have rated this project. Thank you!
+          </p>
+        ) : (
+          <div className="text-center">
+            <p className="text-xs font-bold text-gray-400 mb-2.5">Rate this project</p>
+            <div className="flex justify-center gap-1.5" onMouseLeave={() => setHoverRating(0)}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => handleRate(i)}
+                  onMouseEnter={() => setHoverRating(i)}
+                  className="focus:outline-none transition-transform duration-200 active:scale-95 disabled:opacity-50"
+                >
+                  <Star
+                    size={26}
+                    className={`transition-colors duration-200 ${
+                      i <= hoverRating
+                        ? 'fill-gold-400 text-gold-400'
+                        : 'fill-transparent text-gray-500 hover:text-gold-400'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -176,6 +249,7 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="min-h-screen bg-dark-900">
+      <Toaster position="top-right" />
       {/* ───── Back Button Bar ───── */}
       <div className="sticky top-0 z-40 bg-dark-900/80 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -267,10 +341,14 @@ export default function ProjectDetailPage() {
             className="space-y-6"
           >
             {/* Rating */}
-            <div className="card p-6 space-y-3">
-              <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Project Rating</p>
-              <StarRating rating={project.rating || 5} />
-            </div>
+            <InteractiveRating
+              projectId={project._id || project.id}
+              currentRating={project.rating || 5}
+              reviewCount={project.reviewCount || 0}
+              onRateSuccess={(updatedProject) => {
+                setProject(updatedProject);
+              }}
+            />
 
             {/* CTA Button */}
             <Link
