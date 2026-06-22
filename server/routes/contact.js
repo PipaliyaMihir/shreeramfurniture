@@ -263,4 +263,42 @@ router.delete('/quotations/:id', protect, async (req, res) => {
   }
 });
 
+// @GET /api/contact/test-email (public diagnostic)
+router.get('/test-email', async (req, res) => {
+  const toEmail = req.query.to || process.env.SMTP_USER || 'mpipaliya550@rku.ac.in';
+  try {
+    console.log(`[Diagnostic] Attempting to send test email to: ${toEmail}`);
+    const info = await sendAutomatedEmail(
+      toEmail,
+      'Shree Ram Furniture Diagnostic Test',
+      'This is a diagnostic email from your website to verify if SMTP is working correctly.'
+    );
+    res.json({
+      status: 'success',
+      message: `Test email sent successfully to ${toEmail}`,
+      messageId: info.messageId,
+      smtpConfig: {
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: process.env.SMTP_PORT || 587,
+        user: process.env.SMTP_USER,
+        hasPass: !!process.env.SMTP_PASS
+      }
+    });
+  } catch (error) {
+    console.error('[Diagnostic] Test email failed:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to send test email',
+      error: error.message,
+      stack: error.stack,
+      smtpConfig: {
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: process.env.SMTP_PORT || 587,
+        user: process.env.SMTP_USER,
+        hasPass: !!process.env.SMTP_PASS
+      }
+    });
+  }
+});
+
 module.exports = router;
