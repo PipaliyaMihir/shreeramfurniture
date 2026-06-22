@@ -35,69 +35,18 @@ const uploadPdf = multer({
   limits: { fileSize: 25 * 1024 * 1024 }
 });
 
-const https = require('https');
-
-// Helper to make HTTPS requests to Brevo API without external dependencies
-function sendBrevoRequest(apiKey, payload) {
-  return new Promise((resolve, reject) => {
-    const postData = JSON.stringify(payload);
-    const options = {
-      hostname: 'api.brevo.com',
-      port: 443,
-      path: '/v3/smtp/email',
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'content-type': 'application/json',
-        'api-key': apiKey,
-        'content-length': Buffer.byteLength(postData)
-      }
-    };
-
-    const req = https.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => body += chunk);
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          try {
-            const parsed = JSON.parse(body);
-            resolve({ messageId: parsed.messageId || 'success' });
-          } catch (e) {
-            resolve({ messageId: 'success' });
-          }
-        } else {
-          reject(new Error(`Brevo API returned status ${res.statusCode}: ${body}`));
-        }
-      });
-    });
-
-    req.on('error', (e) => reject(e));
-    req.write(postData);
-    req.end();
-  });
-}
-
-// Helper: send automated email (supports Brevo HTTP API or Nodemailer SMTP fallback)
+// Helper: send automated email
 async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
-  // If Brevo API key is available, use Brevo HTTP API (Port 443 - works on Render Free Tier)
+  // If Brevo API key is available, use Brevo HTTP API (ideal for Render free tier to bypass SMTP block)
   if (process.env.BREVO_API_KEY) {
-    console.log('✉️ Sending email via Brevo HTTP API (Port 443)...');
     const senderEmail = process.env.SMTP_USER || 'mpipaliya550@rku.ac.in';
+    const senderName = 'Shree Ram Furniture';
+    
     const payload = {
-      sender: {
-        name: "Shree Ram Furniture",
-        email: senderEmail
-      },
-      to: [
-        {
-          email: toEmail
-        }
-      ],
-      replyTo: {
-        email: senderEmail
-      },
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: toEmail }],
       subject: subject,
-      textContent: textBody
+      textContent: textBody,
     };
 
     if (pdfPath) {
@@ -120,8 +69,8 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
                 content: fileBuffer.toString('base64')
               }
             ];
-          } catch (fileErr) {
-            console.error('⚠️ Failed to read PDF attachment for Brevo:', fileErr.message);
+          } catch (readErr) {
+            console.error('⚠️ Failed to read PDF catalog file for Brevo:', readErr.message);
           }
         } else {
           console.warn('⚠️ PDF attachment not found at path:', fullPath);
@@ -130,17 +79,30 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
     }
 
     try {
-      const info = await sendBrevoRequest(process.env.BREVO_API_KEY, payload);
-      console.log('✅ Email sent successfully via Brevo. Message ID:', info.messageId);
-      return info;
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': process.env.BREVO_API_KEY,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || `Brevo API error: ${response.status}`);
+      }
+
+      console.log('✅ Automated email sent via Brevo successfully. Message ID:', data.messageId);
+      return data;
     } catch (error) {
-      console.error('❌ Error sending email via Brevo API:', error.message);
+      console.error('❌ Error sending automated email via Brevo:', error);
       throw error;
     }
   }
 
-  // Fallback: SMTP / Nodemailer (local testing/dev)
-  console.log('✉️ Brevo API key not found. Using local SMTP/Nodemailer transporter...');
+  // Otherwise, fall back to standard SMTP / Nodemailer
   let transporter;
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     let smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -176,6 +138,7 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
         pass: process.env.SMTP_PASS
       },
       tls: {
+        // Must specify servername when host is an IP address to pass TLS validation
         servername: process.env.SMTP_HOST || 'smtp.gmail.com'
       }
     });
