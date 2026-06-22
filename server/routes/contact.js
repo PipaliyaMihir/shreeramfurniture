@@ -39,15 +39,42 @@ const uploadPdf = multer({
 async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
   let transporter;
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    let smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+    
+    // Resolve SMTP host to IPv4 to prevent IPv6 ENETUNREACH errors on cloud hosting
+    try {
+      const dns = require('dns').promises;
+      const result = await dns.lookup(smtpHost, { family: 4 });
+      if (result && result.address) {
+        console.log(`Resolved SMTP host ${smtpHost} to IPv4 address: ${result.address}`);
+        smtpHost = result.address;
+      }
+    } catch (dnsErr) {
+      console.warn(`DNS lookup failed for ${smtpHost}, trying resolve4 fallback:`, dnsErr.message);
+      try {
+        const dns = require('dns').promises;
+        const ips = await dns.resolve4(smtpHost);
+        if (ips && ips.length > 0) {
+          console.log(`Resolved SMTP host ${smtpHost} via resolve4 fallback to IPv4: ${ips[0]}`);
+          smtpHost = ips[0];
+        }
+      } catch (dns2Err) {
+        console.warn(`DNS resolve4 fallback failed for ${smtpHost}, falling back to hostname:`, dns2Err.message);
+      }
+    }
+
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      host: smtpHost,
       port: Number(process.env.SMTP_PORT) || 587,
       secure: Number(process.env.SMTP_PORT) === 465,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
       },
-      family: 4 // Force IPv4 to prevent ENETUNREACH errors on platforms without IPv6 support (like Render)
+      tls: {
+        // Must specify servername when host is an IP address to pass TLS validation
+        servername: process.env.SMTP_HOST || 'smtp.gmail.com'
+      }
     });
   } else {
     try {
