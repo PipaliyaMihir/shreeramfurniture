@@ -180,19 +180,7 @@ router.post('/quotation', async (req, res) => {
     sendAutomatedEmail(email, config.subject, personalizedBody, config.pdfUrl)
       .catch(err => console.error('Error sending auto-reply email to client:', err));
 
-    // Send notification email to the admin in the background
-    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER || 'mpipaliya550@rku.ac.in';
-    const adminSubject = `New Quotation Request from ${name}`;
-    const adminBody = `You have received a new quotation request on Shree Ram Furniture website.\n\n` +
-      `Client Details:\n` +
-      `- Name: ${name}\n` +
-      `- Email: ${email}\n` +
-      `- Phone: ${phone || 'N/A'}\n\n` +
-      `Message/Requirements:\n${message}\n\n` +
-      `Best regards,\nShree Ram Furniture System`;
 
-    sendAutomatedEmail(adminEmail, adminSubject, adminBody)
-      .catch(err => console.error('Error sending admin notification email:', err));
 
     res.status(201).json({ message: 'Quotation request submitted successfully!', quotation });
   } catch (error) {
