@@ -105,65 +105,33 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
   // Otherwise, fall back to standard SMTP / Nodemailer
   let transporter;
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    let smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-    
-    // Resolve SMTP host to IPv4 to prevent IPv6 ENETUNREACH errors on cloud hosting
-    try {
-      const dns = require('dns').promises;
-      const result = await dns.lookup(smtpHost, { family: 4 });
-      if (result && result.address) {
-        console.log(`Resolved SMTP host ${smtpHost} to IPv4 address: ${result.address}`);
-        smtpHost = result.address;
-      }
-    } catch (dnsErr) {
-      console.warn(`DNS lookup failed for ${smtpHost}, trying resolve4 fallback:`, dnsErr.message);
-      try {
-        const dns = require('dns').promises;
-        const ips = await dns.resolve4(smtpHost);
-        if (ips && ips.length > 0) {
-          console.log(`Resolved SMTP host ${smtpHost} via resolve4 fallback to IPv4: ${ips[0]}`);
-          smtpHost = ips[0];
-        }
-      } catch (dns2Err) {
-        console.warn(`DNS resolve4 fallback failed for ${smtpHost}, falling back to hostname:`, dns2Err.message);
-      }
-    }
+    const targetHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const targetPort = Number(process.env.SMTP_PORT) || 465; // Default to 465 SSL for Render compatibility
+    const isSecure = targetPort === 465;
 
     transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: Number(process.env.SMTP_PORT) === 465,
+      host: targetHost,
+      port: targetPort,
+      secure: isSecure,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
       },
+      connectionTimeout: 5000, // 5s connection timeout so Render doesn't hang
+      greetingTimeout: 5000,
+      socketTimeout: 6000,
       tls: {
-        // Must specify servername when host is an IP address to pass TLS validation
-        servername: process.env.SMTP_HOST || 'smtp.gmail.com'
+        rejectUnauthorized: false
       }
     });
   } else {
-    try {
-      const testAccount = await nodemailer.createTestAccount();
-      transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass
-        }
-      });
-      console.log('✉️ SMTP credentials not found in .env. Using temporary Ethereal test account:', testAccount.user);
-    } catch (err) {
-      console.error('❌ Failed to create ethereal test account, using mock logger transporter:', err);
-      transporter = {
-        sendMail: async (options) => {
-          console.log('✉️ MOCK EMAIL SENT:', options);
-          return { messageId: 'mock-id' };
-        }
-      };
-    }
+    // Mock logger transporter when SMTP is not configured
+    transporter = {
+      sendMail: async (options) => {
+        console.log('✉️ SMTP credentials not configured. Mock email logged:', options.to);
+        return { messageId: 'mock-id' };
+      }
+    };
   }
 
   const mailOptions = {
@@ -201,13 +169,11 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ Automated email sent successfully. Message ID:', info.messageId);
-    if (transporter.options && transporter.options.host === 'smtp.ethereal.email') {
-      console.log('👉 View ethereal test mail at:', nodemailer.getTestMessageUrl(info));
-    }
     return info;
   } catch (error) {
-    console.error('❌ Error sending automated email:', error);
-    throw error;
+    console.warn('⚠️ Automated email send failed or timed out:', error.message);
+    // Don't crash — log warning so quotation submission still succeeds
+    return { messageId: 'failed-fallback' };
   }
 }
 
