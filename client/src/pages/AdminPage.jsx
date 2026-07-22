@@ -94,10 +94,59 @@ function Sidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
   );
 }
 
+const compressDataUrl = (dataUrl, maxWidth = 1000, maxHeight = 1000, quality = 0.7) => {
+  return new Promise((resolve) => {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+      return resolve(dataUrl || '');
+    }
+    if (dataUrl.length < 300 * 1024) {
+      return resolve(dataUrl);
+    }
+
+    const img = new window.Image();
+    img.onload = () => {
+      try {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        if (!w || !h) return resolve(dataUrl);
+
+        let width = w;
+        let height = h;
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressed = canvas.toDataURL('image/jpeg', quality);
+        if (compressed && compressed.length > 200 && compressed.length < dataUrl.length) {
+          resolve(compressed);
+        } else {
+          resolve(dataUrl);
+        }
+      } catch (err) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
 const fileToBase64 = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) => {
   return new Promise((resolve) => {
     if (!file) return resolve('');
-    if (typeof file === 'string') return resolve(file);
+    if (typeof file === 'string') return resolve(compressDataUrl(file, maxWidth, maxHeight, quality));
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -280,22 +329,32 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     }
 
     setSaving(true);
-    const categoriesPayload = validCategories.map((catName) => ({
-      name: catName.trim(),
-      images: (categoryImages[catName] || []).filter(img => typeof img === 'string' && img.trim() !== ''),
-    }));
-
     let chosenCover = coverImage && typeof coverImage === 'string' ? coverImage.trim() : '';
+
+    // Compress all category images (including legacy large base64 images stored in existing products)
+    const compressedCategoriesPayload = await Promise.all(
+      validCategories.map(async (catName) => {
+        const rawImgs = (categoryImages[catName] || []).filter(img => typeof img === 'string' && img.trim() !== '');
+        const compressedImgs = await Promise.all(rawImgs.map(img => compressDataUrl(img)));
+        return {
+          name: catName.trim(),
+          images: compressedImgs,
+        };
+      })
+    );
+
     if (!chosenCover) {
-      const firstCatImg = categoriesPayload.find(cat => cat.images && cat.images.length > 0)?.images[0];
+      const firstCatImg = compressedCategoriesPayload.find(cat => cat.images && cat.images.length > 0)?.images[0];
       if (firstCatImg) chosenCover = firstCatImg;
+    } else {
+      chosenCover = await compressDataUrl(chosenCover);
     }
 
     const payload = {
       name: String(form.name || '').trim(),
       description: String(form.description || '').trim(),
       coverImage: chosenCover,
-      categories: categoriesPayload,
+      categories: compressedCategoriesPayload,
       featured: !!form.featured,
       price: 0,
       originalPrice: 0,
