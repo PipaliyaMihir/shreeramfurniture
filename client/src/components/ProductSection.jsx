@@ -147,12 +147,11 @@ const ProductSection = () => {
 
         {/* Category Filter Tabs */}
         <motion.div
-          className="flex overflow-x-auto gap-2 mb-10 sm:mb-12 pb-2 scrollbar-hide sm:justify-center"
+          className="flex flex-wrap justify-center items-center gap-2 sm:gap-2.5 max-w-5xl mx-auto mb-10 sm:mb-12 px-2"
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           <button
             onClick={() => setActiveCategory('all')}
