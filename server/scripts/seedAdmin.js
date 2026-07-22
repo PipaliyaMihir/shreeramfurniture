@@ -27,7 +27,7 @@ async function seedAdmin() {
       name: 'Admin',
       email: process.env.ADMIN_EMAIL,
       password: hashedPassword,
-      isAdmin: true,
+      role: 'admin',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
