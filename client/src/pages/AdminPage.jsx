@@ -94,7 +94,7 @@ function Sidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
   );
 }
 
-const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
+const fileToBase64 = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) => {
   return new Promise((resolve) => {
     if (!file) return resolve('');
     if (typeof file === 'string') return resolve(file);
@@ -104,7 +104,7 @@ const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) =>
       const rawDataUrl = event.target.result;
       if (!rawDataUrl || typeof rawDataUrl !== 'string') return resolve('');
 
-      if (!file.type || !file.type.startsWith('image/') || (file.size && file.size < 400 * 1024)) {
+      if (!file.type || !file.type.startsWith('image/')) {
         return resolve(rawDataUrl);
       }
 
@@ -114,9 +114,7 @@ const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) =>
           const w = img.naturalWidth || img.width;
           const h = img.naturalHeight || img.height;
 
-          if (!w || !h || w < 10 || h < 10) {
-            return resolve(rawDataUrl);
-          }
+          if (!w || !h) return resolve(rawDataUrl);
 
           let width = w;
           let height = h;
@@ -138,7 +136,7 @@ const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) =>
           ctx.drawImage(img, 0, 0, width, height);
 
           const compressed = canvas.toDataURL('image/jpeg', quality);
-          if (compressed && compressed.length > 500 && compressed.startsWith('data:image/')) {
+          if (compressed && compressed.length > 200 && compressed.startsWith('data:image/')) {
             resolve(compressed);
           } else {
             resolve(rawDataUrl);
@@ -287,20 +285,10 @@ function ProductModal({ product, categories, onClose, onSaved }) {
       images: (categoryImages[catName] || []).filter(img => typeof img === 'string' && img.trim() !== ''),
     }));
 
-    let flatImages = validCategories.reduce((acc, catName) => {
-      const imgs = (categoryImages[catName] || []).filter(img => typeof img === 'string' && img.trim() !== '');
-      return acc.concat(imgs);
-    }, []);
-
     let chosenCover = coverImage && typeof coverImage === 'string' ? coverImage.trim() : '';
-    if (!chosenCover && flatImages.length > 0) {
-      chosenCover = flatImages[0];
-    }
-
-    if (chosenCover && !flatImages.includes(chosenCover)) {
-      flatImages = [chosenCover, ...flatImages];
-    } else if (chosenCover && flatImages.includes(chosenCover)) {
-      flatImages = [chosenCover, ...flatImages.filter(img => img !== chosenCover)];
+    if (!chosenCover) {
+      const firstCatImg = categoriesPayload.find(cat => cat.images && cat.images.length > 0)?.images[0];
+      if (firstCatImg) chosenCover = firstCatImg;
     }
 
     const payload = {
@@ -308,7 +296,6 @@ function ProductModal({ product, categories, onClose, onSaved }) {
       description: String(form.description || '').trim(),
       coverImage: chosenCover,
       categories: categoriesPayload,
-      images: flatImages,
       featured: !!form.featured,
       price: 0,
       originalPrice: 0,
