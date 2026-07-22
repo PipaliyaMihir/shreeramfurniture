@@ -118,8 +118,65 @@ const getImageSrc = (img) => {
   return `${base}${img}`;
 };
 
+// Lightweight File Item Row (No lag, loads image only on eye click)
+function FileItemRow({ img, filename, index, onDelete }) {
+  const [showPreview, setShowPreview] = useState(false);
+  const src = getImageSrc(img);
+  const cleanName = filename.length > 28
+    ? filename.substring(0, 12) + '...' + filename.substring(filename.length - 10)
+    : filename;
+
+  return (
+    <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-dark-900 border border-white/[0.06] text-xs transition-colors">
+      <div className="flex items-center justify-between gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Image size={15} className="text-gold-400 shrink-0" />
+          <span className="text-gray-300 font-medium truncate" title={filename}>
+            {cleanName}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="p-1 text-gray-400 hover:text-gold-400 hover:bg-gold-400/10 rounded transition-colors"
+            title={showPreview ? 'Hide preview' : 'Quick preview'}
+          >
+            {showPreview ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(img)}
+              className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+              title="Remove image"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showPreview && (
+        <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden border border-gold-400/20 bg-black/40 mt-1">
+          <img
+            src={src}
+            alt=""
+            loading="lazy"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80';
+            }}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ───────────────── Image Uploader ─────────────────
-// Uploads files directly to /api/upload and returns server URLs.
+// Uploads files directly to /api/upload and displays lightweight file items.
 function ImageUploader({ onUploaded, existing = [], onDelete }) {
   const [uploading, setUploading] = useState(false);
 
@@ -152,10 +209,10 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
 
   return (
     <div className="space-y-3">
-      <div {...getRootProps()} className={`upload-zone py-6 bg-dark-900 border-white/[0.05] rounded-xl ${isDragActive ? 'dragover' : ''}`}>
+      <div {...getRootProps()} className={`upload-zone py-5 bg-dark-900 border-white/[0.05] rounded-xl ${isDragActive ? 'dragover' : ''}`}>
         <input {...getInputProps()} />
         <div className="flex flex-col items-center gap-1.5">
-          <Upload size={24} className="text-primary-400" />
+          <Upload size={22} className="text-primary-400" />
           {uploading ? (
             <p className="text-xs text-gray-500 animate-pulse">Uploading to server...</p>
           ) : isDragActive ? (
@@ -170,33 +227,28 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
       </div>
 
       {existing.length > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-          {existing.map((img, i) => {
-            const src = getImageSrc(img);
-            return (
-              <div key={i} className="relative group rounded-xl overflow-hidden aspect-[4/3] bg-dark-900 border border-white/[0.05]">
-                <img
-                  src={src}
-                  alt=""
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80';
-                  }}
-                  className="w-full h-full object-cover"
+        <div className="space-y-2 mt-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-400 px-1">
+            <span>Uploaded Files ({existing.length})</span>
+            <span className="text-[10px] text-gold-400/80 font-normal">✨ Fast Mode (No Lag)</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+            {existing.map((img, i) => {
+              const filename = typeof img === 'string'
+                ? img.split('/').pop() || `Image ${i + 1}`
+                : `Image ${i + 1}`;
+
+              return (
+                <FileItemRow
+                  key={img + i}
+                  img={img}
+                  filename={filename}
+                  index={i}
+                  onDelete={onDelete}
                 />
-                {onDelete && (
-                  <button
-                    type="button"
-                    onClick={() => onDelete(img)}
-                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                    title="Delete image"
-                  >
-                    <Trash2 size={16} className="text-white hover:text-red-400 transition-colors" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
