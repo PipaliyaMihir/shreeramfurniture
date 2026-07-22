@@ -139,7 +139,7 @@ const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) =
 };
 
 // ───────────────── Image Uploader ─────────────────
-function ImageUploader({ onUploaded, existing = [], onDelete, coverImage = '', onSetCover = null }) {
+function ImageUploader({ onUploaded, existing = [], onDelete }) {
   const [uploading, setUploading] = useState(false);
 
   const onDrop = useCallback(async (acceptedFiles) => {
@@ -185,35 +185,17 @@ function ImageUploader({ onUploaded, existing = [], onDelete, coverImage = '', o
       {existing.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
           {existing.map((img, i) => {
-            const src = img;
-            const isCover = coverImage && coverImage === img;
             return (
-              <div key={i} className={`relative group rounded-xl overflow-hidden aspect-[4/3] bg-dark-900 ${isCover ? 'ring-2 ring-gold-400 border border-gold-400' : 'border border-white/[0.05]'}`}>
-                <img src={src} alt="" className="w-full h-full object-cover" />
-                {isCover && (
-                  <div className="absolute top-1 left-1 bg-gold-400 text-dark-900 text-[10px] font-bold px-1.5 py-0.5 rounded shadow flex items-center gap-0.5 z-10">
-                    <Star size={10} className="fill-dark-900 text-dark-900" /> Cover
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-1 z-20">
-                  {onSetCover && !isCover && (
-                    <button
-                      type="button"
-                      onClick={() => onSetCover(img)}
-                      className="text-[10px] font-bold bg-gold-400 hover:bg-gold-300 text-dark-900 px-2 py-1 rounded-md shadow transition-colors flex items-center gap-1"
-                    >
-                      <Star size={10} className="fill-dark-900 text-dark-900" /> Set Cover
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onDelete(img)}
-                    className="p-1 bg-red-500/80 hover:bg-red-500 text-white rounded-md transition-colors"
-                    title="Delete image"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+              <div key={i} className="relative group rounded-xl overflow-hidden aspect-[4/3] bg-dark-900 border border-white/[0.05]">
+                <img src={img} alt="" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => onDelete(img)}
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  title="Delete image"
+                >
+                  <Trash2 size={16} className="text-white hover:text-red-400 transition-colors" />
+                </button>
               </div>
             );
           })}
@@ -354,7 +336,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
                 placeholder="Describe the overall scope of carpentry work done at this site (e.g. customized living room desks, dining setup)..." className="input-field resize-none" />
             </div>
 
-            {/* Dedicated Cover Image Showcase Section */}
+            {/* Dedicated Cover Image Section */}
             <div className="p-4 border border-gold-400/25 bg-dark-900/80 rounded-2xl space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -363,7 +345,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
                     <span>Project Cover Image (Main Showcase Thumbnail)</span>
                   </h4>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Select or upload a dedicated photo to showcase on the main project cards and detail banner.
+                    Upload a dedicated cover photo to showcase on the main project cards and detail banner.
                   </p>
                 </div>
                 {coverImage && (
@@ -395,7 +377,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
               ) : (
                 <div className="space-y-2">
                   <p className="text-xs text-amber-300 font-medium">
-                    💡 Upload a dedicated cover image below, or click &quot;Set Cover&quot; on any uploaded category photo.
+                    💡 Upload your project cover photo directly below.
                   </p>
                   <ImageUploader
                     existing={[]}
@@ -439,15 +421,10 @@ function ProductModal({ product, categories, onClose, onSaved }) {
               </div>
             </div>
 
-            {/* Dedicated Photo Upload Card for EACH Selected Category */}
+            {/* Photo Upload Card for EACH Selected Category */}
             {selectedCategories.length > 0 && (
               <div className="space-y-4 pt-2 border-t border-dark-600/10">
-                <div>
-                  <label className="block text-sm font-bold text-dark-400">Category-Specific Photos *</label>
-                  <p className="text-xs text-gold-400 mt-1 font-medium">
-                    ⭐ Tip: Click &quot;Set Cover&quot; on any uploaded photo below to make it the main cover image shown on the frontend.
-                  </p>
-                </div>
+                <label className="block text-sm font-bold text-dark-400">Category-Specific Photos *</label>
                 <div className="space-y-4">
                   {selectedCategories.map((catName) => {
                     const icon = categories.find(c => (typeof c === 'string' ? c : c.name) === catName)?.icon || '🛋️';
@@ -468,28 +445,17 @@ function ProductModal({ product, categories, onClose, onSaved }) {
                         </div>
                         <ImageUploader
                           existing={categoryImages[catName] || []}
-                          coverImage={coverImage}
-                          onSetCover={(img) => {
-                            setCoverImage(img);
-                            toast.success('Cover image updated!');
-                          }}
                           onUploaded={(urls) => {
                             setCategoryImages(prev => ({
                               ...prev,
                               [catName]: [...(prev[catName] || []), ...urls]
                             }));
-                            if (!coverImage && urls.length > 0) {
-                              setCoverImage(urls[0]);
-                            }
                           }}
                           onDelete={(img) => {
                             setCategoryImages(prev => ({
                               ...prev,
                               [catName]: (prev[catName] || []).filter((u) => u !== img)
                             }));
-                            if (coverImage === img) {
-                              setCoverImage('');
-                            }
                           }}
                         />
                       </div>

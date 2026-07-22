@@ -4,16 +4,20 @@ import { motion } from 'framer-motion';
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80';
 
 const getImageUrl = (img) => {
-  if (!img) return FALLBACK_IMAGE;
-  if (img.startsWith('http')) return img;
+  if (!img || typeof img !== 'string') return FALLBACK_IMAGE;
+  if (img.startsWith('http') || img.startsWith('data:')) return img;
   return img;
 };
 
 const ProductCard = ({ product }) => {
-  const imageUrl =
-    product.images && product.images.length > 0
-      ? getImageUrl(product.images[0])
-      : FALLBACK_IMAGE;
+  const catImage = (product.categories || []).reduce((found, cat) => {
+    if (found) return found;
+    return typeof cat === 'object' && Array.isArray(cat.images) && cat.images.length > 0 ? cat.images[0] : null;
+  }, null);
+
+  const imageUrl = getImageUrl(
+    product.coverImage || (product.images && product.images.length > 0 ? product.images[0] : catImage)
+  );
 
   const displayCategories = (product.categories || []).slice(0, 2);
 
@@ -26,7 +30,7 @@ const ProductCard = ({ product }) => {
       transition={{ duration: 0.4 }}
     >
       <Link
-        to={`/project/${product._id}`}
+        to={`/project/${product._id || product.id}`}
         className="group relative block overflow-hidden rounded-2xl bg-dark-800 border border-white/[0.06] hover:border-gold-400/20 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(191,155,48,0.08)]"
       >
         {/* Image Container — 16:10 aspect */}
@@ -35,6 +39,10 @@ const ProductCard = ({ product }) => {
             src={imageUrl}
             alt={product.name}
             loading="lazy"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = FALLBACK_IMAGE;
+            }}
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
 

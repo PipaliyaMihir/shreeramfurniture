@@ -83,7 +83,7 @@
   }
 
   .section-subtitle {
-    @apply text-gray-400 text-base md:text-lg max-w-2xl leading-relaxed mt-4;
+    @apply text-gray-400 text-base md:text-lg max-w-2xl mx-auto text-center leading-relaxed mt-4;
   }
 
   /* --- Form Inputs --- */

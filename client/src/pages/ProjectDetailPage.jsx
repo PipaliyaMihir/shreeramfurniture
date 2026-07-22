@@ -324,7 +324,7 @@ export default function ProjectDetailPage() {
   }
 
   const categoryNames = subCategories.map((cat) => cat.name);
-  const heroCoverImage = lightboxImages[0] || getImageUrl(null);
+  const heroCoverImage = project?.coverImage ? getImageUrl(project.coverImage) : (lightboxImages[0] || getImageUrl(null));
 
   return (
     <div className="min-h-screen bg-dark-900">
@@ -350,7 +350,15 @@ export default function ProjectDetailPage() {
         transition={{ duration: 0.6 }}
         className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden"
       >
-        <img src={heroCoverImage} alt={project.name} className="w-full h-full object-cover" />
+        <img
+          src={heroCoverImage}
+          alt={project.name}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80';
+          }}
+          className="w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/55 to-transparent" />
 
