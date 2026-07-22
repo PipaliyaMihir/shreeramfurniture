@@ -17,29 +17,12 @@ const highlights = [
   { icon: Award, text: '8+ Years Experience' },
 ];
 
-const FALLBACK_TESTIMONIALS = [
-  {
-    name: 'Priya Patel',
-    rating: 5,
-    message: 'The modular kitchen they built is absolutely stunning! Every detail was perfect — from the wood finish to the soft-close fittings. Highly recommend Shree Ram Furniture.',
-    projectName: 'Nand Prime Bungalow',
-  },
-  {
-    name: 'Rajesh Kumar',
-    rating: 5,
-    message: 'Got complete office and bungalow furniture made on-site. The carpenters were extremely skilled and delivered exactly what was promised. Excellent custom work!',
-    projectName: 'Nand Prime Bungalow',
-  },
-  {
-    name: 'Meera Shah',
-    rating: 5,
-    message: 'Beautiful TV unit and wardrobe craftsmanship. Very sturdy construction and the finish is gorgeous. Our entire family loves the new look of our home!',
-    projectName: 'Royal Residency Bungalow',
-  },
-];
+
+
 
 export default function HomePage() {
-  const [testimonials, setTestimonials] = useState(FALLBACK_TESTIMONIALS);
+  const [testimonials, setTestimonials] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
   useEffect(() => {
     if (window.location.hash) {
@@ -58,18 +41,17 @@ export default function HomePage() {
     }
   }, []);
 
-  // Fetch real reviews from the database
+  // Fetch real reviews from the database — always live, no fake fallback
   useEffect(() => {
     const fetchReviews = async () => {
       try {
         const res = await getRecentReviews();
-        const reviews = res.data;
-        if (reviews && reviews.length >= 2) {
-          setTestimonials(reviews.slice(0, 6));
-        }
-        // If fewer than 2 real reviews, keep showing fallback so page doesn't look empty
+        const reviews = res.data || [];
+        setTestimonials(reviews.slice(0, 6));
       } catch (err) {
-        // silently fall back to hardcoded testimonials
+        setTestimonials([]);
+      } finally {
+        setReviewsLoading(false);
       }
     };
     fetchReviews();
@@ -117,7 +99,7 @@ export default function HomePage() {
         <ProductSection />
         <AboutSection />
 
-        {/* ── Testimonials (dynamic from DB, fallback to hardcoded) ── */}
+        {/* ── Testimonials (100% live from DB) ── */}
         <section className="py-20 md:py-28 bg-dark-900 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gold-400/[0.03] rounded-full blur-[120px] pointer-events-none" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -128,41 +110,91 @@ export default function HomePage() {
                 Hear from clients who trusted us with their custom furniture projects
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {testimonials.map((t, i) => (
-                <motion.div
-                  key={t._id || t.name + i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.12, duration: 0.5 }}
-                  viewport={{ once: true }}
-                  className="card card-hover p-6"
-                >
-                  {/* Stars */}
-                  <div className="flex gap-1 mb-4">
-                    {Array.from({ length: t.rating || 5 }).map((_, j) => (
-                      <Star key={j} size={14} className="fill-gold-400 text-gold-400" />
-                    ))}
-                  </div>
 
-                  <p className="text-gray-400 text-sm leading-relaxed mb-6 italic flex-1">
-                    &ldquo;{t.message || t.review}&rdquo;
-                  </p>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center font-display font-bold text-dark-900 text-sm flex-shrink-0">
-                      {(t.name || 'U')[0].toUpperCase()}
+            {/* Loading skeleton */}
+            {reviewsLoading && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="card p-6 space-y-4">
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, j) => (
+                        <div key={j} className="h-3 w-3 rounded-full bg-dark-600/50 animate-pulse" />
+                      ))}
                     </div>
-                    <div>
-                      <p className="font-semibold text-dark-400 text-sm">{t.name}</p>
-                      {t.projectName && (
-                        <p className="text-gray-500 text-xs">{t.projectName}</p>
-                      )}
+                    <div className="space-y-2">
+                      <div className="h-3 w-full rounded bg-dark-600/40 animate-pulse" />
+                      <div className="h-3 w-5/6 rounded bg-dark-600/40 animate-pulse" />
+                      <div className="h-3 w-4/6 rounded bg-dark-600/40 animate-pulse" />
+                    </div>
+                    <div className="flex items-center gap-3 pt-2">
+                      <div className="w-10 h-10 rounded-full bg-dark-600/50 animate-pulse" />
+                      <div className="space-y-1.5">
+                        <div className="h-3 w-24 rounded bg-dark-600/40 animate-pulse" />
+                        <div className="h-2.5 w-20 rounded bg-dark-600/30 animate-pulse" />
+                      </div>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {/* No reviews yet */}
+            {!reviewsLoading && testimonials.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center gap-4 py-16 text-center"
+              >
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={28} className="text-gold-400/30" />
+                  ))}
+                </div>
+                <p className="text-gray-400 text-lg font-display font-semibold">No reviews yet</p>
+                <p className="text-gray-600 text-sm max-w-md">
+                  Client reviews submitted on project pages will appear here automatically. Complete a project and invite your client to leave a review!
+                </p>
+              </motion.div>
+            )}
+
+            {/* Live reviews grid */}
+            {!reviewsLoading && testimonials.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {testimonials.map((t, i) => (
+                  <motion.div
+                    key={t._id || t.name + i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.12, duration: 0.5 }}
+                    viewport={{ once: true }}
+                    className="card card-hover p-6 flex flex-col"
+                  >
+                    {/* Stars */}
+                    <div className="flex gap-1 mb-4">
+                      {Array.from({ length: t.rating || 5 }).map((_, j) => (
+                        <Star key={j} size={14} className="fill-gold-400 text-gold-400" />
+                      ))}
+                    </div>
+
+                    <p className="text-gray-400 text-sm leading-relaxed mb-6 italic flex-1">
+                      &ldquo;{t.message || t.review}&rdquo;
+                    </p>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-600 rounded-full flex items-center justify-center font-display font-bold text-dark-900 text-sm flex-shrink-0">
+                        {(t.name || 'U')[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-dark-400 text-sm">{t.name}</p>
+                        {t.projectName && (
+                          <p className="text-gray-500 text-xs">{t.projectName}</p>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

@@ -34,44 +34,38 @@ const fadeUp = {
 };
 
 export default function AboutSection() {
-  const [ratingStats, setRatingStats] = useState({ average: 4.9, totalCount: 124 });
+  // null = still loading, then set to real values
+  const [ratingStats, setRatingStats] = useState(null);
 
   useEffect(() => {
     async function fetchStats() {
       try {
         const res = await getProducts({ limit: 100 });
         const productsData = res.data?.products || res.data || [];
-        if (productsData.length > 0) {
-          let totalReviews = 0;
-          let weightedRatingSum = 0;
-          let fallbackRatingSum = 0;
 
-          productsData.forEach((p) => {
-            const count = p.reviewCount || 0;
-            const rat = p.rating || 5;
-            fallbackRatingSum += rat;
-            if (count > 0) {
-              totalReviews += count;
-              weightedRatingSum += rat * count;
-            }
-          });
+        let totalReviews = 0;
+        let weightedRatingSum = 0;
 
-          let finalAverage = 4.9;
-          if (totalReviews > 0) {
-            finalAverage = weightedRatingSum / totalReviews;
-          } else if (productsData.length > 0) {
-            finalAverage = fallbackRatingSum / productsData.length;
+        productsData.forEach((p) => {
+          const count = p.reviewCount || (p.reviews?.length) || 0;
+          const rat = p.rating || 5;
+          if (count > 0) {
+            totalReviews += count;
+            weightedRatingSum += rat * count;
           }
+        });
 
-          const displayReviewsCount = totalReviews > 0 ? totalReviews : 124;
+        const finalAverage = totalReviews > 0
+          ? Math.round((weightedRatingSum / totalReviews) * 10) / 10
+          : 5.0;
 
-          setRatingStats({
-            average: Math.round(finalAverage * 10) / 10,
-            totalCount: displayReviewsCount,
-          });
-        }
+        setRatingStats({
+          average: finalAverage,
+          totalCount: totalReviews,
+        });
       } catch (err) {
         console.error('Failed to load rating stats in AboutSection:', err);
+        setRatingStats({ average: 5.0, totalCount: 0 });
       }
     }
     fetchStats();
@@ -125,10 +119,24 @@ export default function AboutSection() {
                   <Star key={i} className="h-4 w-4 fill-gold-400" />
                 ))}
               </div>
-              <p className="mt-2 font-display text-2xl font-bold text-dark-400">
-                {ratingStats.average.toFixed(1)}<span className="text-base font-normal text-gray-400">/5.0</span>
-              </p>
-              <p className="mt-0.5 text-xs text-gray-500">{ratingStats.totalCount} Reviews</p>
+              {ratingStats === null ? (
+                /* Loading skeleton */
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-7 w-24 rounded-lg bg-dark-600/40 animate-pulse" />
+                  <div className="h-3 w-20 rounded-md bg-dark-600/30 animate-pulse" />
+                </div>
+              ) : (
+                <>
+                  <p className="mt-2 font-display text-2xl font-bold text-dark-400">
+                    {ratingStats.average.toFixed(1)}<span className="text-base font-normal text-gray-400">/5.0</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {ratingStats.totalCount > 0
+                      ? `${ratingStats.totalCount} Review${ratingStats.totalCount !== 1 ? 's' : ''}`
+                      : 'Be the first to review!'}
+                  </p>
+                </>
+              )}
             </motion.div>
           </motion.div>
 
