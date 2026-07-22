@@ -94,29 +94,32 @@ function Sidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
   );
 }
 
-const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) => {
+const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
   return new Promise((resolve) => {
-    if (!file || typeof file === 'string') {
-      return resolve(file || '');
-    }
-
-    if (!file.type || !file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result || '');
-      reader.onerror = () => resolve('');
-      reader.readAsDataURL(file);
-      return;
-    }
+    if (!file) return resolve('');
+    if (typeof file === 'string') return resolve(file);
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      if (!dataUrl) return resolve('');
+      const rawDataUrl = event.target.result;
+      if (!rawDataUrl || typeof rawDataUrl !== 'string') return resolve('');
+
+      if (!file.type || !file.type.startsWith('image/') || (file.size && file.size < 400 * 1024)) {
+        return resolve(rawDataUrl);
+      }
+
       const img = new window.Image();
       img.onload = () => {
         try {
-          let width = img.width;
-          let height = img.height;
+          const w = img.naturalWidth || img.width;
+          const h = img.naturalHeight || img.height;
+
+          if (!w || !h || w < 10 || h < 10) {
+            return resolve(rawDataUrl);
+          }
+
+          let width = w;
+          let height = h;
 
           if (width > maxWidth || height > maxHeight) {
             if (width / height > maxWidth / maxHeight) {
@@ -129,20 +132,24 @@ const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) =
           }
 
           const canvas = document.createElement('canvas');
-          canvas.width = width || 1;
-          canvas.height = height || 1;
+          canvas.width = width;
+          canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, width, height);
 
-          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-          resolve(compressedBase64);
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          if (compressed && compressed.length > 500 && compressed.startsWith('data:image/')) {
+            resolve(compressed);
+          } else {
+            resolve(rawDataUrl);
+          }
         } catch (err) {
           console.error('Canvas compression fallback to raw dataUrl:', err);
-          resolve(dataUrl);
+          resolve(rawDataUrl);
         }
       };
-      img.onerror = () => resolve(dataUrl);
-      img.src = dataUrl;
+      img.onerror = () => resolve(rawDataUrl);
+      img.src = rawDataUrl;
     };
     reader.onerror = () => resolve('');
     reader.readAsDataURL(file);
@@ -159,7 +166,7 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
     try {
       const promises = acceptedFiles.map(fileToBase64);
       const base64Urls = await Promise.all(promises);
-      toast.success(`${base64Urls.length} image(s) optimized & loaded!`);
+      toast.success(`${base64Urls.length} image(s) loaded!`);
       onUploaded(base64Urls);
     } catch (err) {
       toast.error('Failed to process images');
@@ -182,7 +189,7 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
         <div className="flex flex-col items-center gap-1.5">
           <Upload size={24} className="text-primary-400" />
           {uploading ? (
-            <p className="text-xs text-gray-500 animate-pulse">Optimizing & Uploading...</p>
+            <p className="text-xs text-gray-500 animate-pulse">Processing & Uploading...</p>
           ) : isDragActive ? (
             <p className="text-xs text-primary-400 font-medium">Drop images here!</p>
           ) : (
@@ -198,7 +205,15 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
           {existing.map((img, i) => {
             return (
               <div key={i} className="relative group rounded-xl overflow-hidden aspect-[4/3] bg-dark-900 border border-white/[0.05]">
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={img}
+                  alt=""
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80';
+                  }}
+                  className="w-full h-full object-cover"
+                />
                 <button
                   type="button"
                   onClick={() => onDelete(img)}
@@ -372,7 +387,15 @@ function ProductModal({ product, categories, onClose, onSaved }) {
 
               {coverImage ? (
                 <div className="relative group w-48 aspect-[16/10] rounded-xl overflow-hidden border-2 border-gold-400 bg-dark-900 shadow-glow">
-                  <img src={coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={coverImage}
+                    alt="Cover Preview"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80';
+                    }}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute top-1.5 left-1.5 bg-gold-400 text-dark-900 text-[10px] font-bold px-2 py-0.5 rounded shadow flex items-center gap-1 z-10">
                     <Star size={10} className="fill-dark-900 text-dark-900" /> Cover Image
                   </div>
@@ -393,7 +416,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
                   <ImageUploader
                     existing={[]}
                     onUploaded={(urls) => {
-                      if (urls.length > 0) setCoverImage(urls[0]);
+                      if (urls.length > 0 && urls[0]) setCoverImage(urls[0]);
                     }}
                   />
                 </div>
