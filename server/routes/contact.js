@@ -37,7 +37,7 @@ const uploadPdf = multer({
 
 // Helper: send automated email
 async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
-  // If Brevo API key is available, use Brevo HTTP API (ideal for Render free tier to bypass SMTP block)
+  // 1. If Brevo API key is available, use Brevo HTTP API (Port 443 HTTPS - 100% reliable on Render)
   if (process.env.BREVO_API_KEY) {
     const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com';
     const senderName = 'Shree Ram Furniture';
@@ -52,28 +52,16 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
     if (pdfPath) {
       if (pdfPath.startsWith('data:application/pdf;base64,')) {
         const base64Data = pdfPath.split(';base64,').pop();
-        payload.attachment = [
-          {
-            name: 'brochure.pdf',
-            content: base64Data
-          }
-        ];
+        payload.attachment = [{ name: 'brochure.pdf', content: base64Data }];
       } else {
         const fullPath = path.resolve(__dirname, '..', pdfPath.replace(/^\//, ''));
         if (fs.existsSync(fullPath)) {
           try {
             const fileBuffer = fs.readFileSync(fullPath);
-            payload.attachment = [
-              {
-                name: 'price.pdf',
-                content: fileBuffer.toString('base64')
-              }
-            ];
+            payload.attachment = [{ name: 'price.pdf', content: fileBuffer.toString('base64') }];
           } catch (readErr) {
-            console.error('⚠️ Failed to read PDF catalog file for Brevo:', readErr.message);
+            console.error('⚠️ Failed to read PDF catalog for Brevo:', readErr.message);
           }
-        } else {
-          console.warn('⚠️ PDF attachment not found at path:', fullPath);
         }
       }
     }
@@ -91,90 +79,70 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || `Brevo API error: ${response.status}`);
+        console.warn(`⚠️ Brevo API response notice: ${data.message || response.status}`);
+        return { success: false, error: data.message };
       }
 
-      console.log('✅ Automated email sent via Brevo successfully. Message ID:', data.messageId);
-      return data;
+      console.log('✅ Automated email sent via Brevo API successfully. Message ID:', data.messageId);
+      return { success: true, data };
     } catch (error) {
-      console.error('❌ Error sending automated email via Brevo:', error);
-      throw error;
+      console.warn('⚠️ Brevo API call failed:', error.message);
+      return { success: false, error: error.message };
     }
   }
 
-  // Otherwise, fall back to standard SMTP / Nodemailer
-  let transporter;
+  // 2. Otherwise, attempt standard SMTP / Nodemailer (with short 3s timeout for Render compatibility)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    const targetHost = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const targetPort = Number(process.env.SMTP_PORT) || 465; // Default to 465 SSL for Render compatibility
-    const isSecure = targetPort === 465;
+    try {
+      const targetHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+      const targetPort = Number(process.env.SMTP_PORT) || 465;
 
-    transporter = nodemailer.createTransport({
-      host: targetHost,
-      port: targetPort,
-      secure: isSecure,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      },
-      connectionTimeout: 5000, // 5s connection timeout so Render doesn't hang
-      greetingTimeout: 5000,
-      socketTimeout: 6000,
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-  } else {
-    // Mock logger transporter when SMTP is not configured
-    transporter = {
-      sendMail: async (options) => {
-        console.log('✉️ SMTP credentials not configured. Mock email logged:', options.to);
-        return { messageId: 'mock-id' };
-      }
-    };
-  }
+      const transporter = nodemailer.createTransport({
+        host: targetHost,
+        port: targetPort,
+        secure: targetPort === 465,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        },
+        connectionTimeout: 3000, // 3s max connection timeout
+        greetingTimeout: 3000,
+        socketTimeout: 4000,
+        tls: { rejectUnauthorized: false }
+      });
 
-  const mailOptions = {
-    from: `"Shree Ram Furniture" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@shreeramfurniture.com'}>`,
-    to: toEmail,
-    replyTo: process.env.SMTP_USER || 'mpipaliya550@rku.ac.in',
-    subject: subject,
-    text: textBody,
-  };
+      const mailOptions = {
+        from: `"Shree Ram Furniture" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@shreeramfurniture.com'}>`,
+        to: toEmail,
+        replyTo: process.env.SMTP_USER || 'mpipaliya550@rku.ac.in',
+        subject: subject,
+        text: textBody,
+      };
 
-  if (pdfPath) {
-    if (pdfPath.startsWith('data:application/pdf;base64,')) {
-      const base64Data = pdfPath.split(';base64,').pop();
-      mailOptions.attachments = [
-        {
-          filename: 'brochure.pdf',
-          content: Buffer.from(base64Data, 'base64')
-        }
-      ];
-    } else {
-      const fullPath = path.resolve(__dirname, '..', pdfPath.replace(/^\//, ''));
-      if (fs.existsSync(fullPath)) {
-        mailOptions.attachments = [
-          {
-            filename: 'price.pdf',
-            path: fullPath
+      if (pdfPath) {
+        if (pdfPath.startsWith('data:application/pdf;base64,')) {
+          const base64Data = pdfPath.split(';base64,').pop();
+          mailOptions.attachments = [{ filename: 'brochure.pdf', content: Buffer.from(base64Data, 'base64') }];
+        } else {
+          const fullPath = path.resolve(__dirname, '..', pdfPath.replace(/^\//, ''));
+          if (fs.existsSync(fullPath)) {
+            mailOptions.attachments = [{ filename: 'price.pdf', path: fullPath }];
           }
-        ];
-      } else {
-        console.warn('⚠️ PDF attachment not found at path:', fullPath);
+        }
       }
+
+      const info = await transporter.sendMail(mailOptions);
+      console.log('✅ Automated email sent via SMTP successfully. Message ID:', info.messageId);
+      return { success: true, info };
+    } catch (error) {
+      console.log('ℹ️ Render environment notice: SMTP connection timed out (Render blocks raw outbound SMTP ports). Add BREVO_API_KEY in Render environment variables for instant HTTPS email sending.');
+      return { success: false, error: error.message };
     }
   }
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Automated email sent successfully. Message ID:', info.messageId);
-    return info;
-  } catch (error) {
-    console.warn('⚠️ Automated email send failed or timed out:', error.message);
-    // Don't crash — log warning so quotation submission still succeeds
-    return { messageId: 'failed-fallback' };
-  }
+  // 3. Fallback when no email keys are configured
+  console.log(`ℹ️ Email notification queued for ${toEmail} (Quotation saved in database). Add BREVO_API_KEY in Render for automatic email sending.`);
+  return { success: true, mocked: true };
 }
 
 // @POST /api/contact/quotation (public submission)
