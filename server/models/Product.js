@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
+    coverImage: { type: String, default: '' },
     categories: [
       {
         name: { type: String, required: true },
@@ -38,6 +39,7 @@ const defaultProducts = [
   {
     name: 'Nand Prime Bungalow (Satellite)',
     description: 'Bespoke residential carpentry project completed for a luxury 3 BHK bungalow, featuring custom wood panelling, modular kitchen cabinets, sliding wardrobes, and LED-lit TV console panels built entirely on-site.',
+    coverImage: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&q=80',
     categories: [
       { name: 'Kitchen', images: ['https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&q=80'] },
       { name: 'Bedroom', images: ['https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&q=80'] },

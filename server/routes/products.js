@@ -111,15 +111,58 @@ router.post('/:id/rate', async (req, res) => {
   }
 });
 
+// Helper to process categories, coverImage and images array
+function processProductImages(body) {
+  if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+    body.name = 'Untitled Project';
+  }
+
+  if (body.categories && Array.isArray(body.categories)) {
+    body.categories = body.categories
+      .map(cat => {
+        if (typeof cat === 'string' && cat.trim()) {
+          return { name: cat.trim(), images: [] };
+        }
+        if (cat && typeof cat === 'object' && cat.name && String(cat.name).trim()) {
+          return {
+            name: String(cat.name).trim(),
+            images: Array.isArray(cat.images) ? cat.images.filter(img => typeof img === 'string' && img.trim()) : []
+          };
+        }
+        return null;
+      })
+      .filter(cat => cat && cat.name);
+
+    let catImages = body.categories.reduce((acc, cat) => acc.concat(cat.images || []), []);
+    if (body.coverImage && typeof body.coverImage === 'string' && body.coverImage.trim()) {
+      const cover = body.coverImage.trim();
+      const filtered = catImages.filter(img => img !== cover);
+      body.images = [cover, ...filtered];
+      body.coverImage = cover;
+    } else {
+      body.images = catImages;
+      if (catImages.length > 0) {
+        body.coverImage = catImages[0];
+      } else {
+        body.coverImage = '';
+      }
+    }
+  } else if (body.coverImage && typeof body.coverImage === 'string' && body.coverImage.trim()) {
+    const cover = body.coverImage.trim();
+    const existing = Array.isArray(body.images) ? body.images.filter(img => typeof img === 'string' && img.trim()) : [];
+    body.images = [cover, ...existing.filter(img => img !== cover)];
+    body.coverImage = cover;
+  }
+}
+
 // @POST /api/products (admin)
 router.post('/', protect, async (req, res) => {
   try {
-    if (req.body.categories && Array.isArray(req.body.categories)) {
-      req.body.images = req.body.categories.reduce((acc, cat) => acc.concat(cat.images || []), []);
-    }
+    processProductImages(req.body);
     const product = await Product.create(req.body);
     res.status(201).json(product);
   } catch (error) {
+    console.error('❌ Error creating product:', error);
     res.status(400).json({ message: error.message });
   }
 });
@@ -127,9 +170,7 @@ router.post('/', protect, async (req, res) => {
 // @PUT /api/products/:id (admin)
 router.put('/:id', protect, async (req, res) => {
   try {
-    if (req.body.categories && Array.isArray(req.body.categories)) {
-      req.body.images = req.body.categories.reduce((acc, cat) => acc.concat(cat.images || []), []);
-    }
+    processProductImages(req.body);
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -137,6 +178,7 @@ router.put('/:id', protect, async (req, res) => {
     if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
   } catch (error) {
+    console.error('❌ Error updating product:', error);
     res.status(400).json({ message: error.message });
   }
 });

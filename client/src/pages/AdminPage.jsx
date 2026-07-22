@@ -94,17 +94,52 @@ function Sidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
   );
 }
 
-const fileToBase64 = (file) => {
+const fileToBase64 = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) => {
   return new Promise((resolve, reject) => {
+    if (!file.type || !file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+      return;
+    }
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressedBase64);
+      };
+      img.onerror = (error) => reject(error);
+    };
     reader.onerror = (error) => reject(error);
   });
 };
 
 // ───────────────── Image Uploader ─────────────────
-function ImageUploader({ onUploaded, existing = [], onDelete }) {
+function ImageUploader({ onUploaded, existing = [], onDelete, coverImage = '', onSetCover = null }) {
   const [uploading, setUploading] = useState(false);
 
   const onDrop = useCallback(async (acceptedFiles) => {
@@ -113,10 +148,10 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
     try {
       const promises = acceptedFiles.map(fileToBase64);
       const base64Urls = await Promise.all(promises);
-      toast.success(`${base64Urls.length} image(s) loaded!`);
+      toast.success(`${base64Urls.length} image(s) optimized & loaded!`);
       onUploaded(base64Urls);
     } catch (err) {
-      toast.error('Failed to read files');
+      toast.error('Failed to process images');
     } finally {
       setUploading(false);
     }
@@ -126,7 +161,7 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
     onDrop,
     accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.gif'] },
     multiple: true,
-    maxSize: 10 * 1024 * 1024,
+    maxSize: 15 * 1024 * 1024,
   });
 
   return (
@@ -136,7 +171,7 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
         <div className="flex flex-col items-center gap-1.5">
           <Upload size={24} className="text-primary-400" />
           {uploading ? (
-            <p className="text-xs text-gray-500">Uploading...</p>
+            <p className="text-xs text-gray-500 animate-pulse">Optimizing & Uploading...</p>
           ) : isDragActive ? (
             <p className="text-xs text-primary-400 font-medium">Drop images here!</p>
           ) : (
@@ -148,19 +183,37 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
       </div>
 
       {existing.length > 0 && (
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
           {existing.map((img, i) => {
-            const src = img.startsWith('http') ? img : img;
+            const src = img;
+            const isCover = coverImage && coverImage === img;
             return (
-              <div key={i} className="relative group rounded-xl overflow-hidden aspect-[4/3] bg-dark-900 border border-white/[0.05]">
+              <div key={i} className={`relative group rounded-xl overflow-hidden aspect-[4/3] bg-dark-900 ${isCover ? 'ring-2 ring-gold-400 border border-gold-400' : 'border border-white/[0.05]'}`}>
                 <img src={src} alt="" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => onDelete(img)}
-                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                >
-                  <Trash2 size={14} className="text-white" />
-                </button>
+                {isCover && (
+                  <div className="absolute top-1 left-1 bg-gold-400 text-dark-900 text-[10px] font-bold px-1.5 py-0.5 rounded shadow flex items-center gap-0.5 z-10">
+                    <Star size={10} className="fill-dark-900 text-dark-900" /> Cover
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-1 z-20">
+                  {onSetCover && !isCover && (
+                    <button
+                      type="button"
+                      onClick={() => onSetCover(img)}
+                      className="text-[10px] font-bold bg-gold-400 hover:bg-gold-300 text-dark-900 px-2 py-1 rounded-md shadow transition-colors flex items-center gap-1"
+                    >
+                      <Star size={10} className="fill-dark-900 text-dark-900" /> Set Cover
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onDelete(img)}
+                    className="p-1 bg-red-500/80 hover:bg-red-500 text-white rounded-md transition-colors"
+                    title="Delete image"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -178,6 +231,9 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     description: product?.description || '',
     featured: product?.featured || false,
   });
+  const [coverImage, setCoverImage] = useState(
+    product?.coverImage || product?.images?.[0] || ''
+  );
   const [selectedCategories, setSelectedCategories] = useState(() => {
     if (!product?.categories) return [];
     return product.categories.map(cat => typeof cat === 'string' ? cat : cat.name || '');
@@ -199,14 +255,18 @@ function ProductModal({ product, categories, onClose, onSaved }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedCategories.length === 0) {
-      toast.error('Please select at least one category');
+    const validCategories = Array.from(new Set(
+      selectedCategories.filter(catName => typeof catName === 'string' && catName.trim() !== '')
+    ));
+
+    if (validCategories.length === 0) {
+      toast.error('Please select at least one valid category');
       return;
     }
 
     // Verify that every selected category has at least one image
-    for (let catName of selectedCategories) {
-      const imgs = categoryImages[catName] || [];
+    for (let catName of validCategories) {
+      const imgs = (categoryImages[catName] || []).filter(img => typeof img === 'string' && img.trim() !== '');
       if (imgs.length === 0) {
         toast.error(`Please upload at least one photo for the "${catName}" category`);
         return;
@@ -214,26 +274,36 @@ function ProductModal({ product, categories, onClose, onSaved }) {
     }
 
     setSaving(true);
-    // Align categories array with backend schema
-    const categoriesPayload = selectedCategories.map((catName) => ({
-      name: catName,
-      images: categoryImages[catName] || [],
+    const categoriesPayload = validCategories.map((catName) => ({
+      name: catName.trim(),
+      images: (categoryImages[catName] || []).filter(img => typeof img === 'string' && img.trim() !== ''),
     }));
 
-    // Flatten all category images to form the main product images array
-    const flatImages = selectedCategories.reduce((acc, catName) => {
-      return acc.concat(categoryImages[catName] || []);
+    let flatImages = validCategories.reduce((acc, catName) => {
+      const imgs = (categoryImages[catName] || []).filter(img => typeof img === 'string' && img.trim() !== '');
+      return acc.concat(imgs);
     }, []);
 
+    let chosenCover = coverImage && typeof coverImage === 'string' ? coverImage.trim() : '';
+    if (!chosenCover && flatImages.length > 0) {
+      chosenCover = flatImages[0];
+    }
+
+    if (chosenCover && !flatImages.includes(chosenCover)) {
+      flatImages = [chosenCover, ...flatImages];
+    } else if (chosenCover && flatImages.includes(chosenCover)) {
+      flatImages = [chosenCover, ...flatImages.filter(img => img !== chosenCover)];
+    }
+
     const payload = {
-      name: form.name,
-      description: form.description,
+      name: String(form.name || '').trim(),
+      description: String(form.description || '').trim(),
+      coverImage: chosenCover,
       categories: categoriesPayload,
       images: flatImages,
-      featured: form.featured,
+      featured: !!form.featured,
       price: 0,
       originalPrice: 0,
-      inStock: true,
     };
 
     try {
@@ -259,7 +329,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="modal-content text-left bg-dark-800 border-dark-600/35"
+        className="modal-content text-left bg-dark-800 border-dark-600/35 max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between p-6 border-b border-dark-600/10">
           <h2 className="font-display text-xl font-bold text-dark-400">
@@ -282,6 +352,59 @@ function ProductModal({ product, categories, onClose, onSaved }) {
               <label className="block text-sm font-semibold text-gray-500 mb-1">Scope of Work Overview *</label>
               <textarea required rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Describe the overall scope of carpentry work done at this site (e.g. customized living room desks, dining setup)..." className="input-field resize-none" />
+            </div>
+
+            {/* Dedicated Cover Image Showcase Section */}
+            <div className="p-4 border border-gold-400/25 bg-dark-900/80 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-display font-semibold text-sm text-gold-400 flex items-center gap-2">
+                    <Star size={16} className="fill-gold-400 text-gold-400" />
+                    <span>Project Cover Image (Main Showcase Thumbnail)</span>
+                  </h4>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Select or upload a dedicated photo to showcase on the main project cards and detail banner.
+                  </p>
+                </div>
+                {coverImage && (
+                  <button
+                    type="button"
+                    onClick={() => setCoverImage('')}
+                    className="text-xs font-semibold text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Clear Cover
+                  </button>
+                )}
+              </div>
+
+              {coverImage ? (
+                <div className="relative group w-48 aspect-[16/10] rounded-xl overflow-hidden border-2 border-gold-400 bg-dark-900 shadow-glow">
+                  <img src={coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
+                  <div className="absolute top-1.5 left-1.5 bg-gold-400 text-dark-900 text-[10px] font-bold px-2 py-0.5 rounded shadow flex items-center gap-1 z-10">
+                    <Star size={10} className="fill-dark-900 text-dark-900" /> Cover Image
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCoverImage('')}
+                    className="absolute top-1.5 right-1.5 bg-black/75 hover:bg-red-600 text-white p-1 rounded transition-colors z-20"
+                    title="Remove Cover Image"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-amber-300 font-medium">
+                    💡 Upload a dedicated cover image below, or click &quot;Set Cover&quot; on any uploaded category photo.
+                  </p>
+                  <ImageUploader
+                    existing={[]}
+                    onUploaded={(urls) => {
+                      if (urls.length > 0) setCoverImage(urls[0]);
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Category selection - Clean checkboxes */}
@@ -319,7 +442,12 @@ function ProductModal({ product, categories, onClose, onSaved }) {
             {/* Dedicated Photo Upload Card for EACH Selected Category */}
             {selectedCategories.length > 0 && (
               <div className="space-y-4 pt-2 border-t border-dark-600/10">
-                <label className="block text-sm font-bold text-dark-400">Category-Specific Photos *</label>
+                <div>
+                  <label className="block text-sm font-bold text-dark-400">Category-Specific Photos *</label>
+                  <p className="text-xs text-gold-400 mt-1 font-medium">
+                    ⭐ Tip: Click &quot;Set Cover&quot; on any uploaded photo below to make it the main cover image shown on the frontend.
+                  </p>
+                </div>
                 <div className="space-y-4">
                   {selectedCategories.map((catName) => {
                     const icon = categories.find(c => (typeof c === 'string' ? c : c.name) === catName)?.icon || '🛋️';
@@ -340,17 +468,28 @@ function ProductModal({ product, categories, onClose, onSaved }) {
                         </div>
                         <ImageUploader
                           existing={categoryImages[catName] || []}
+                          coverImage={coverImage}
+                          onSetCover={(img) => {
+                            setCoverImage(img);
+                            toast.success('Cover image updated!');
+                          }}
                           onUploaded={(urls) => {
                             setCategoryImages(prev => ({
                               ...prev,
                               [catName]: [...(prev[catName] || []), ...urls]
                             }));
+                            if (!coverImage && urls.length > 0) {
+                              setCoverImage(urls[0]);
+                            }
                           }}
                           onDelete={(img) => {
                             setCategoryImages(prev => ({
                               ...prev,
                               [catName]: (prev[catName] || []).filter((u) => u !== img)
                             }));
+                            if (coverImage === img) {
+                              setCoverImage('');
+                            }
                           }}
                         />
                       </div>
@@ -414,8 +553,8 @@ function DashboardTab({ products, categories, slides }) {
           {products.slice(0, 5).map((p) => (
             <div key={p._id} className="flex items-center gap-3 p-3 rounded-xl bg-dark-900 border border-dark-600/20 hover:bg-dark-700/60 transition-colors">
               <div className="w-10 h-10 bg-dark-800 rounded-lg flex items-center justify-center text-lg overflow-hidden shrink-0 border border-dark-600/10">
-                {p.images?.[0] ? (
-                  <img src={p.images[0].startsWith('http') ? p.images[0] : p.images[0]} alt="" className="w-full h-full object-cover" />
+                {(p.coverImage || p.images?.[0]) ? (
+                  <img src={p.coverImage || p.images[0]} alt="" className="w-full h-full object-cover" />
                 ) : '🏠'}
               </div>
               <div className="flex-1 min-w-0 text-left">
@@ -512,9 +651,9 @@ function ProductsTab({ products, categories, onRefresh }) {
                   <tr key={p._id} className="hover:bg-dark-900/40 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-dark-900 rounded-lg flex items-center justify-center text-lg overflow-hidden shrink-0 border border-dark-600/20">
-                          {p.images?.[0] ? (
-                            <img src={p.images[0].startsWith('http') ? p.images[0] : p.images[0]} alt="" className="w-full h-full object-cover rounded-lg" onError={(e) => { e.target.style.display='none'; }} />
+                        <div className="w-10 h-10 bg-dark-900 rounded-lg flex items-center justify-center text-lg overflow-hidden shrink-0 border border-dark-600/20 relative">
+                          {(p.coverImage || p.images?.[0]) ? (
+                            <img src={p.coverImage || p.images[0]} alt="" className="w-full h-full object-cover rounded-lg" onError={(e) => { e.target.style.display='none'; }} />
                           ) : '🏠'}
                         </div>
                         <div className="text-left">
