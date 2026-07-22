@@ -11,7 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import {
   getProducts, createProduct, updateProduct, deleteProduct,
-  getCategories, createCategory, deleteCategory,
+  getCategories, createCategory, updateCategory, deleteCategory,
   getAllHeroSlides, createHeroSlide, updateHeroSlide, deleteHeroSlide,
   uploadImages, getEmailConfig, updateEmailConfig, uploadQuotationPdf, getQuotations, deleteQuotation,
   getHeroConfig, updateHeroConfig
@@ -692,7 +692,9 @@ function ProductsTab({ products, categories, onRefresh }) {
 // ───────────────── Categories Tab ─────────────────
 function CategoriesTab({ categories, onRefresh }) {
   const [showForm, setShowForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', icon: '🛋️', order: 0 });
+  const [editForm, setEditForm] = useState({ name: '', description: '', icon: '🛋️', order: 0 });
   const [saving, setSaving] = useState(false);
 
   const handleCreate = async (e) => {
@@ -706,6 +708,32 @@ function CategoriesTab({ categories, onRefresh }) {
       onRefresh();
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Error creating category');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOpenEdit = (cat) => {
+    setEditingCategory(cat);
+    setEditForm({
+      name: cat.name || '',
+      description: cat.description || '',
+      icon: cat.icon || '🛋️',
+      order: cat.order || 0,
+    });
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if (!editingCategory) return;
+    setSaving(true);
+    try {
+      await updateCategory(editingCategory._id, editForm);
+      toast.success('Category updated successfully!');
+      setEditingCategory(null);
+      onRefresh();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Error updating category');
     } finally {
       setSaving(false);
     }
@@ -734,6 +762,7 @@ function CategoriesTab({ categories, onRefresh }) {
         </button>
       </div>
 
+      {/* New Category Form */}
       <AnimatePresence>
         {showForm && (
           <motion.div
@@ -755,9 +784,9 @@ function CategoriesTab({ categories, onRefresh }) {
                   placeholder="🍳" className="input-field" />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-gray-500 mb-1">Description</label>
+                <label className="block text-sm font-semibold text-gray-500 mb-1">Description / Subtitle</label>
                 <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Category description" className="input-field" />
+                  placeholder="e.g. Bright and Functional Kitchen" className="input-field" />
               </div>
               <div className="sm:col-span-2 flex gap-3">
                 <button type="button" onClick={() => setShowForm(false)} className="btn-outline">Cancel</button>
@@ -770,22 +799,98 @@ function CategoriesTab({ categories, onRefresh }) {
         )}
       </AnimatePresence>
 
+      {/* Edit Category Modal */}
+      <AnimatePresence>
+        {editingCategory && (
+          <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEditingCategory(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="modal-content bg-dark-800 border-dark-600/35 text-left max-w-md w-full p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-dark-600/15 pb-3">
+                <h3 className="font-display text-lg font-bold text-dark-400 flex items-center gap-2">
+                  <Pencil size={18} className="text-gold-400" /> Edit Category
+                </h3>
+                <button onClick={() => setEditingCategory(null)} className="p-1 hover:bg-dark-600/30 text-gray-500 rounded-lg">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdate} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Category Name *</label>
+                  <input
+                    required
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Icon (emoji)</label>
+                  <input
+                    value={editForm.icon}
+                    onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
+                    placeholder="🛋️"
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1">Description / Subtitle</label>
+                  <textarea
+                    rows={3}
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    placeholder="Category subtitle overview..."
+                    className="input-field resize-none"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setEditingCategory(null)} className="btn-outline flex-1 justify-center py-2 text-xs">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center py-2 text-xs font-semibold">
+                    {saving ? 'Saving...' : <><Check size={16} /> Save Changes</>}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Category List Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {categories.map((cat) => (
-          <div key={cat._id} className="admin-card flex items-center justify-between bg-dark-800 border-dark-600/35">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{cat.icon}</span>
-              <div className="text-left">
-                <p className="font-semibold text-dark-400 text-left">{cat.name}</p>
-                <p className="text-xs text-gray-500 text-left">{cat.description || 'No description'}</p>
+          <div key={cat._id} className="admin-card flex items-center justify-between bg-dark-800 border-dark-600/35 p-4 rounded-2xl">
+            <div className="flex items-center gap-3 min-w-0 pr-2">
+              <span className="text-3xl shrink-0">{cat.icon}</span>
+              <div className="text-left min-w-0">
+                <p className="font-semibold text-dark-400 text-left truncate">{cat.name}</p>
+                <p className="text-xs text-gray-500 text-left line-clamp-2">{cat.description || 'No description'}</p>
               </div>
             </div>
-            <button
-              onClick={() => handleDelete(cat._id)}
-              className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-            >
-              <Trash2 size={16} />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => handleOpenEdit(cat)}
+                className="p-2 text-gold-400 hover:bg-gold-400/10 rounded-lg transition-colors"
+                title="Edit Category"
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                onClick={() => handleDelete(cat._id)}
+                className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                title="Delete Category"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
       </div>

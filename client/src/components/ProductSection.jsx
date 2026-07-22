@@ -54,6 +54,20 @@ const ProductSection = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const syncSearchFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const searchParam = params.get('search');
+      if (searchParam !== null) {
+        setSearchQuery(searchParam);
+      }
+    };
+
+    syncSearchFromUrl();
+    window.addEventListener('app-search-update', syncSearchFromUrl);
+    return () => window.removeEventListener('app-search-update', syncSearchFromUrl);
+  }, []);
+
   const filteredProducts = products.filter((product) => {
     // 1. Category Filter
     if (activeCategory !== 'all') {
