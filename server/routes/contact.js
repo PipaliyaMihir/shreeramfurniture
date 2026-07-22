@@ -39,7 +39,7 @@ const uploadPdf = multer({
 async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
   // If Brevo API key is available, use Brevo HTTP API (ideal for Render free tier to bypass SMTP block)
   if (process.env.BREVO_API_KEY) {
-    const senderEmail = process.env.SMTP_USER || 'mpipaliya550@rku.ac.in';
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com';
     const senderName = 'Shree Ram Furniture';
     
     const payload = {
