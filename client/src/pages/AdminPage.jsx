@@ -94,22 +94,32 @@ function Sidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
   );
 }
 
-// Read file as-is — no compression, no resizing. Images are already optimized by the user.
-const fileToBase64 = (file) => {
-  return new Promise((resolve) => {
-    if (!file) return resolve('');
-    if (typeof file === 'string') return resolve(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      resolve(dataUrl && typeof dataUrl === 'string' ? dataUrl : '');
-    };
-    reader.onerror = () => resolve('');
-    reader.readAsDataURL(file);
-  });
+// Upload files to server as real files (multipart/form-data).
+// Returns array of URL strings like ["/uploads/1234567890.jpg"]
+const uploadFilesToServer = async (files) => {
+  if (!files || files.length === 0) return [];
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append('images', file);
+  }
+  const res = await uploadImages(formData);
+  return res.data?.urls || [];
+};
+
+// Build a full displayable URL from a stored path.
+// Handles: "/uploads/..." paths, full http URLs, and legacy base64 data URLs.
+const getImageSrc = (img) => {
+  if (!img || typeof img !== 'string') return '';
+  if (img.startsWith('http') || img.startsWith('data:')) return img;
+  // Relative server path like "/uploads/filename.jpg"
+  const base = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:5001'
+    : '';
+  return `${base}${img}`;
 };
 
 // ───────────────── Image Uploader ─────────────────
+// Uploads files directly to /api/upload and returns server URLs.
 function ImageUploader({ onUploaded, existing = [], onDelete }) {
   const [uploading, setUploading] = useState(false);
 
@@ -117,16 +127,17 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
     if (!acceptedFiles.length) return;
     setUploading(true);
     try {
-      const promises = acceptedFiles.map(fileToBase64);
-      const base64Urls = (await Promise.all(promises)).filter(u => !!u);
-      if (base64Urls.length > 0) {
-        toast.success(`${base64Urls.length} image(s) loaded!`);
-        onUploaded(base64Urls);
+      const urls = await uploadFilesToServer(acceptedFiles);
+      if (urls.length > 0) {
+        toast.success(`${urls.length} image(s) uploaded!`);
+        onUploaded(urls);
       } else {
-        toast.error('No valid images could be read');
+        toast.error('Upload failed — no files returned from server');
       }
     } catch (err) {
-      toast.error('Failed to process images');
+      console.error('Upload error:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Upload failed';
+      toast.error(msg);
     } finally {
       setUploading(false);
     }
@@ -146,12 +157,13 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
         <div className="flex flex-col items-center gap-1.5">
           <Upload size={24} className="text-primary-400" />
           {uploading ? (
-            <p className="text-xs text-gray-500 animate-pulse">Processing & Uploading...</p>
+            <p className="text-xs text-gray-500 animate-pulse">Uploading to server...</p>
           ) : isDragActive ? (
             <p className="text-xs text-primary-400 font-medium">Drop images here!</p>
           ) : (
             <>
-              <p className="text-xs font-medium text-gray-400">Drag & drop files, or <span className="text-gold-400 underline">browse</span></p>
+              <p className="text-xs font-medium text-gray-400">Drag &amp; drop files, or <span className="text-gold-400 underline">browse</span></p>
+              <p className="text-[10px] text-gray-600">JPG, PNG, WebP · up to 50 MB each</p>
             </>
           )}
         </div>
@@ -160,10 +172,11 @@ function ImageUploader({ onUploaded, existing = [], onDelete }) {
       {existing.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
           {existing.map((img, i) => {
+            const src = getImageSrc(img);
             return (
               <div key={i} className="relative group rounded-xl overflow-hidden aspect-[4/3] bg-dark-900 border border-white/[0.05]">
                 <img
-                  src={img}
+                  src={src}
                   alt=""
                   onError={(e) => {
                     e.target.onerror = null;
@@ -342,7 +355,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
               {coverImage ? (
                 <div className="relative group w-48 aspect-[16/10] rounded-xl overflow-hidden border-2 border-gold-400 bg-dark-900 shadow-glow">
                   <img
-                    src={coverImage}
+                    src={getImageSrc(coverImage)}
                     alt="Cover Preview"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -508,7 +521,7 @@ function DashboardTab({ products, categories, slides }) {
             <div key={p._id} className="flex items-center gap-3 p-3 rounded-xl bg-dark-900 border border-dark-600/20 hover:bg-dark-700/60 transition-colors">
               <div className="w-10 h-10 bg-dark-800 rounded-lg flex items-center justify-center text-lg overflow-hidden shrink-0 border border-dark-600/10">
                 {(p.coverImage || p.images?.[0]) ? (
-                  <img src={p.coverImage || p.images[0]} alt="" className="w-full h-full object-cover" />
+                  <img src={getImageSrc(p.coverImage || p.images[0])} alt="" className="w-full h-full object-cover" />
                 ) : '🏠'}
               </div>
               <div className="flex-1 min-w-0 text-left">
@@ -607,7 +620,7 @@ function ProductsTab({ products, categories, onRefresh }) {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-dark-900 rounded-lg flex items-center justify-center text-lg overflow-hidden shrink-0 border border-dark-600/20 relative">
                           {(p.coverImage || p.images?.[0]) ? (
-                            <img src={p.coverImage || p.images[0]} alt="" className="w-full h-full object-cover rounded-lg" onError={(e) => { e.target.style.display='none'; }} />
+                            <img src={getImageSrc(p.coverImage || p.images[0])} alt="" className="w-full h-full object-cover rounded-lg" onError={(e) => { e.target.style.display='none'; }} />
                           ) : '🏠'}
                         </div>
                         <div className="text-left">

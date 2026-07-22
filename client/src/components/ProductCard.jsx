@@ -6,7 +6,11 @@ const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600121848594-d8644e57
 const getImageUrl = (img) => {
   if (!img || typeof img !== 'string') return FALLBACK_IMAGE;
   if (img.startsWith('http') || img.startsWith('data:')) return img;
-  return img;
+  // Resolve server-relative paths like "/uploads/filename.jpg"
+  const base = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:5001'
+    : '';
+  return `${base}${img}`;
 };
 
 const ProductCard = ({ product }) => {

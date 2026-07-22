@@ -6,7 +6,7 @@ const upload = require('../middleware/upload');
 const { protect } = require('../middleware/auth');
 
 // @POST /api/upload (admin)
-router.post('/', protect, upload.array('images', 10), (req, res) => {
+router.post('/', protect, upload.array('images', 50), (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: 'No files uploaded' });

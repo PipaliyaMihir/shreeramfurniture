@@ -7,8 +7,12 @@ import toast, { Toaster } from 'react-hot-toast';
 
 const getImageUrl = (img) => {
   if (!img) return 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=800&q=80';
-  if (img.startsWith('http')) return img;
-  return img;
+  if (img.startsWith('http') || img.startsWith('data:')) return img;
+  // Resolve server-relative paths like "/uploads/filename.jpg"
+  const base = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:5001'
+    : '';
+  return `${base}${img}`;
 };
 
 function StarRating({ rating = 4.5, size = 18 }) {
