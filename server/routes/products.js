@@ -10,7 +10,14 @@ router.get('/', async (req, res) => {
     const query = {};
     if (category && category !== 'all') query['categories.name'] = category;
     if (featured === 'true') query.featured = true;
-    if (search) query.name = { $regex: search, $options: 'i' };
+    if (search && typeof search === 'string' && search.trim() !== '') {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { name: searchRegex },
+        { description: searchRegex },
+        { 'categories.name': searchRegex },
+      ];
+    }
 
     const skip = (page - 1) * limit;
     const products = await Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit));

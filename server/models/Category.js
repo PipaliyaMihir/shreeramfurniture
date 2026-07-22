@@ -16,12 +16,14 @@ const CategoryModel = mongoose.model('Category', categorySchema);
 const { wrapModel } = require('../utils/dbFallback');
 
 const defaultCategories = [
-  { name: 'Kitchen', slug: 'kitchen', icon: '🍳', description: 'Modern modular kitchens', order: 1 },
-  { name: 'Bedroom', slug: 'bedroom', icon: '🛏️', description: 'Luxurious bedroom designs', order: 2 },
-  { name: 'Living Area', slug: 'living-area', icon: '🛋️', description: 'Beautiful living room designs', order: 3 },
-  { name: 'TV Unit', slug: 'tv-unit', icon: '📺', description: 'Custom TV units and panels', order: 4 },
-  { name: 'Dining', slug: 'dining', icon: '🍽️', description: 'Elegant dining rooms', order: 5 },
-  { name: 'Office', slug: 'office', icon: '💼', description: 'Modern home office workspaces', order: 6 },
+  { name: 'Living Area', slug: 'living-area', icon: '🛋️', description: 'Spacious and Elegant Living Area', order: 1 },
+  { name: 'Kitchen', slug: 'kitchen', icon: '🍽️', description: 'Bright and Functional Kitchen', order: 2 },
+  { name: 'TV Unit', slug: 'tv-unit', icon: '📺', description: 'Modern Entertainment Corner', order: 3 },
+  { name: 'Bedrooms', slug: 'bedrooms', icon: '🛏️', description: 'Designed for Restful Living', order: 4 },
+  { name: 'Wardrobes', slug: 'wardrobes', icon: '🚪', description: 'Smart Storage with Style', order: 5 },
+  { name: 'Dining Area', slug: 'dining-area', icon: '🍽️', description: 'Perfect Space for Togetherness', order: 6 },
+  { name: 'Pooja Unit', slug: 'pooja-unit', icon: '🛕', description: 'Peaceful Corner for Devotion', order: 7 },
+  { name: 'Other Interiors', slug: 'other-interiors', icon: '✨', description: 'Thoughtfully Designed Every Corner', order: 8 },
 ];
 
 module.exports = wrapModel(CategoryModel, 'Category', defaultCategories);

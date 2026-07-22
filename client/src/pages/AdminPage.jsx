@@ -567,13 +567,17 @@ function ProductsTab({ products, categories, onRefresh }) {
     }
   };
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.categories?.some((c) => {
+  const filtered = products.filter((p) => {
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    const matchName = p.name?.toLowerCase().includes(q);
+    const matchDesc = p.description?.toLowerCase().includes(q);
+    const matchCat = p.categories?.some((c) => {
       const name = typeof c === 'string' ? c : c.name || '';
-      return name.toLowerCase().includes(search.toLowerCase());
-    })
-  );
+      return name.toLowerCase().includes(q);
+    });
+    return matchName || matchDesc || matchCat;
+  });
 
   return (
     <div>
