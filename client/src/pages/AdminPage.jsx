@@ -645,13 +645,13 @@ function ProductsTab({ products, categories, onRefresh }) {
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gold-400" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search completed sites..."
-          className="input-field pl-11"
+          className="input-field-dark pl-11 text-white placeholder-gray-500"
         />
       </div>
 
@@ -1339,8 +1339,8 @@ function QuotationsTab() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-dark-400 mb-2">Quotation Requests</h1>
-      <p className="text-gray-500 mb-8">View all submitted quotation requests and contact forms completed by potential clients.</p>
+      <h1 className="font-display text-2xl font-bold text-white mb-2">Quotation Requests</h1>
+      <p className="text-gray-400 mb-8">View all submitted quotation requests and contact forms completed by potential clients.</p>
 
       <div className="admin-card overflow-hidden p-0 bg-dark-800 border-dark-600/35">
         <div className="overflow-x-auto">
@@ -1362,7 +1362,7 @@ function QuotationsTab() {
                     onClick={() => setSelectedQuote(q)}
                     className="hover:bg-dark-900/40 transition-colors cursor-pointer"
                   >
-                    <td className="px-5 py-4 text-sm font-semibold text-dark-400 text-left">{q.name}</td>
+                    <td className="px-5 py-4 text-sm font-semibold text-white text-left">{q.name}</td>
                     <td className="px-5 py-4 text-sm text-gray-500 text-left">{q.email}</td>
                     <td className="px-5 py-4 text-sm text-gray-500 text-left">{q.phone || '—'}</td>
                     <td className="px-5 py-4 text-sm text-gray-500 max-w-[200px] truncate text-left">{q.message}</td>
@@ -1455,22 +1455,31 @@ function SettingsTab() {
       toast.error('Please upload a PDF file only');
       return;
     }
-    if (file.size > 12 * 1024 * 1024) {
-      toast.error('PDF file size must be less than 12MB');
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error('PDF file size must be less than 25MB');
       return;
     }
 
     setUploadingPdf(true);
     try {
-      const base64Pdf = await fileToBase64(file);
-      const updatedConfig = { ...config, pdfUrl: base64Pdf };
+      // Upload PDF via multipart form (dedicated endpoint — avoids MongoDB 16MB doc limit)
+      const formData = new FormData();
+      formData.append('pdf', file);
+      const uploadRes = await uploadQuotationPdf(formData);
+      const pdfUrl = uploadRes.data?.pdfUrl || uploadRes.pdfUrl;
+      if (!pdfUrl) throw new Error('No PDF URL returned from server');
+      // Save the URL reference into the email config
+      const updatedConfig = { ...config, pdfUrl };
       await updateEmailConfig(updatedConfig);
       setConfig(updatedConfig);
       toast.success('PDF Brochure uploaded successfully!');
     } catch (err) {
-      toast.error('Brochure upload failed');
+      console.error('PDF upload error:', err);
+      toast.error(err?.response?.data?.message || 'Brochure upload failed. Try again.');
     } finally {
       setUploadingPdf(false);
+      // Reset the file input so same file can be re-uploaded if needed
+      e.target.value = '';
     }
   };
 
@@ -1484,8 +1493,8 @@ function SettingsTab() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-dark-400 mb-2">Email Settings</h1>
-      <p className="text-gray-500 mb-8">Customize the automatic quotation email and PDF attachment catalog sent to users when they request quotes.</p>
+      <h1 className="font-display text-2xl font-bold text-white mb-2">Email Settings</h1>
+      <p className="text-gray-400 mb-8">Customize the automatic quotation email and PDF attachment catalog sent to users when they request quotes.</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Settings Form */}
@@ -1524,8 +1533,8 @@ function SettingsTab() {
         {/* PDF Attachment Card */}
         <div className="admin-card bg-dark-800 border-dark-600/35 p-6 rounded-2xl flex flex-col justify-between text-left">
           <div>
-            <h3 className="text-lg font-bold text-dark-400 mb-2">Brochure PDF Attachment</h3>
-            <p className="text-gray-500 text-xs leading-relaxed mb-6">
+            <h3 className="text-lg font-bold text-white mb-2">Brochure PDF Attachment</h3>
+            <p className="text-gray-400 text-xs leading-relaxed mb-6">
               This PDF brochure/catalog will be attached to the automatic quotation reply email. Max size 25MB.
             </p>
 
