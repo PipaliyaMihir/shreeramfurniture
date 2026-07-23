@@ -32,6 +32,9 @@ const pdfFilter = (req, file, cb) => {
 const uploadPdf = multer({
   storage: pdfStorage,
   fileFilter: pdfFilter,
+  limits: { fileSize: 25 * 1024 * 1024 }
+});
+
 const dns = require('dns');
 
 // Force IPv4 lookup function for Nodemailer to prevent ENETUNREACH IPv6 errors
