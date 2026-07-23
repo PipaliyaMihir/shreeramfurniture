@@ -99,15 +99,25 @@ export default function HeroSlider() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Loading skeleton — shown while data is being fetched (no default images flash)
+  // While loading — show first default image as static background (no black flash)
   if (loading) {
     return (
-      <section id="home" className="relative h-screen w-full overflow-hidden bg-dark-900 flex items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-dark-900/80 to-black/90 animate-pulse" />
-        <div className="relative z-10 text-center space-y-4 max-w-2xl px-4">
-          <div className="h-6 w-36 bg-white/10 rounded-full mx-auto animate-pulse" />
-          <div className="h-14 w-full bg-white/10 rounded-2xl mx-auto animate-pulse" />
-          <div className="h-5 w-3/4 bg-white/5 rounded-lg mx-auto animate-pulse" />
+      <section id="home" className="relative h-screen w-full overflow-hidden bg-dark-900">
+        <img
+          src={DEFAULT_SLIDES[0].image}
+          alt="Shree Ram Furniture"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/65" />
+        <div className="relative z-10 flex h-full items-center">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl space-y-5 animate-pulse">
+              <div className="h-5 w-28 bg-white/20 rounded-full" />
+              <div className="h-16 w-3/4 bg-white/20 rounded-xl" />
+              <div className="h-6 w-1/2 bg-white/10 rounded-lg" />
+              <div className="h-12 w-44 bg-white/20 rounded-xl" />
+            </div>
+          </div>
         </div>
       </section>
     );
