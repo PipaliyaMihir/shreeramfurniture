@@ -7,22 +7,21 @@ const DEFAULT_SLIDES = [
   {
     title: 'Crafted with Passion,\nBuilt to Last',
     subtitle: 'Premium custom furniture & on-site carpentry contracting',
-    image:
-      'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=1600&q=80',
+    image: 'https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=1600&q=80',
   },
   {
     title: 'Modern Modular\nKitchen Solutions',
     subtitle: 'Bespoke designs tailored for style and durability',
-    image:
-      'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1600&q=80',
+    image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1600&q=80',
   },
   {
     title: 'Bespoke Custom\nFurniture',
     subtitle: 'Handcrafted furniture made directly on-site — bungalows, offices, and showrooms',
-    image:
-      'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=1600&q=80',
+    image: 'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=1600&q=80',
   },
 ];
+
+const pad = (n) => String(n).padStart(2, '0');
 
 const slideVariants = {
   enter: { opacity: 0, scale: 1.03 },
@@ -50,7 +49,7 @@ export default function HeroSlider() {
   });
   const [current, setCurrent] = useState(0);
   const timerRef = useRef(null);
- 
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -78,11 +77,11 @@ export default function HeroSlider() {
     fetchData();
   }, []);
 
-  const total = slides.length;
+  const total = slides.length || 1;
 
   const goTo = useCallback(
     (index) => {
-      setCurrent((index + total) % total);
+      if (total > 0) setCurrent((index + total) % total);
     },
     [total]
   );
@@ -90,32 +89,36 @@ export default function HeroSlider() {
   const next = useCallback(() => goTo(current + 1), [current, goTo]);
 
   useEffect(() => {
+    if (slides.length === 0) return;
     timerRef.current = setInterval(next, 5000);
     return () => clearInterval(timerRef.current);
-  }, [next]);
+  }, [next, slides.length]);
 
   const handleScrollToProjects = () => {
     const el = document.getElementById('projects');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (loading || !slides.length) {
+  // Loading skeleton — shown while data is being fetched (no default images flash)
+  if (loading) {
     return (
       <section id="home" className="relative h-screen w-full overflow-hidden bg-dark-900 flex items-center justify-center">
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-dark-900/80 to-black/90 animate-pulse" />
         <div className="relative z-10 text-center space-y-4 max-w-2xl px-4">
-          <div className="h-6 w-36 bg-dark-700/60 rounded-full mx-auto animate-pulse" />
-          <div className="h-14 w-full bg-dark-700/50 rounded-2xl mx-auto animate-pulse" />
-          <div className="h-5 w-3/4 bg-dark-700/30 rounded-lg mx-auto animate-pulse" />
+          <div className="h-6 w-36 bg-white/10 rounded-full mx-auto animate-pulse" />
+          <div className="h-14 w-full bg-white/10 rounded-2xl mx-auto animate-pulse" />
+          <div className="h-5 w-3/4 bg-white/5 rounded-lg mx-auto animate-pulse" />
         </div>
       </section>
     );
   }
 
-  const slide = slides[current];
+  const slide = slides[current] || slides[0] || DEFAULT_SLIDES[0];
   const imageSrc = slide?.image?.startsWith('http')
     ? slide.image
-    : slide?.image || '';
+    : slide?.image
+    ? `${slide.image}`
+    : DEFAULT_SLIDES[0].image;
 
   return (
     <section
@@ -134,7 +137,7 @@ export default function HeroSlider() {
         >
           <img
             src={imageSrc}
-            alt={slide.title}
+            alt={slide?.title || 'Shree Ram Furniture'}
             className="h-full w-full object-cover"
           />
 
@@ -162,10 +165,10 @@ export default function HeroSlider() {
               </span>
               <span className="h-px w-10 bg-gold-400/40" />
               <span className="font-display text-sm font-semibold tracking-widest text-gray-400">
-                {pad(total)}
+                {pad(slides.length)}
               </span>
             </motion.div>
- 
+
             {/* Title */}
             <motion.h1
               custom={1}
@@ -175,7 +178,7 @@ export default function HeroSlider() {
             >
               {config.title}
             </motion.h1>
- 
+
             {/* Subtitle */}
             <motion.p
               custom={2}
@@ -184,7 +187,7 @@ export default function HeroSlider() {
             >
               {config.subtitle}
             </motion.p>
- 
+
             {/* CTA */}
             <motion.div custom={3} variants={contentVariants} className="mt-8">
               <button
