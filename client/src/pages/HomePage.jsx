@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import HeroSlider from '../components/HeroSlider';
 import ProductSection from '../components/ProductSection';
@@ -17,13 +17,48 @@ const highlights = [
   { icon: Award, text: '8+ Years Experience' },
 ];
 
-
-
+const SCROLL_KEY = 'homepage_scroll_y';
 
 export default function HomePage() {
   const [testimonials, setTestimonials] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const scrollRestoredRef = useRef(false);
 
+  // ── Save scroll position continuously ──────────────────────────────────
+  useEffect(() => {
+    const saveScroll = () => {
+      sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+    };
+    window.addEventListener('scroll', saveScroll, { passive: true });
+    return () => window.removeEventListener('scroll', saveScroll);
+  }, []);
+
+  // ── Restore scroll position after page renders (only on refresh, not nav) ─
+  useEffect(() => {
+    if (scrollRestoredRef.current) return;
+
+    // Only restore if this is a refresh (performance navigation type 1 = reload)
+    const navEntry = performance.getEntriesByType('navigation')[0];
+    const isRefresh = navEntry?.type === 'reload';
+
+    if (isRefresh) {
+      const savedY = parseInt(sessionStorage.getItem(SCROLL_KEY) || '0', 10);
+      if (savedY > 0) {
+        // Wait briefly for content to render before restoring position
+        const restore = () => window.scrollTo({ top: savedY, behavior: 'instant' });
+        restore();
+        setTimeout(restore, 100);
+        setTimeout(restore, 300);
+      }
+    } else {
+      // Fresh navigation — clear saved scroll and start at top
+      sessionStorage.removeItem(SCROLL_KEY);
+    }
+
+    scrollRestoredRef.current = true;
+  }, []);
+
+  // ── Handle hash-based scrolling (navbar links) ─────────────────────────
   useEffect(() => {
     const handleHashChange = () => {
       if (window.location.hash) {
@@ -49,12 +84,18 @@ export default function HomePage() {
       }
     };
 
-    handleHashChange();
+    // Only run hash scroll on first load if it's NOT a refresh
+    const navEntry = performance.getEntriesByType('navigation')[0];
+    const isRefresh = navEntry?.type === 'reload';
+    if (!isRefresh) {
+      handleHashChange();
+    }
+
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Fetch real reviews from the database — always live, no fake fallback
+  // ── Fetch real reviews from DB ─────────────────────────────────────────
   useEffect(() => {
     const fetchReviews = async () => {
       try {
@@ -165,7 +206,7 @@ export default function HomePage() {
                 </div>
                 <p className="text-gray-400 text-lg font-display font-semibold">No reviews yet</p>
                 <p className="text-gray-600 text-sm max-w-md">
-                  Client reviews submitted on project pages will appear here automatically. Complete a project and invite your client to leave a review!
+                  Client reviews submitted on project pages will appear here automatically.
                 </p>
               </motion.div>
             )}
