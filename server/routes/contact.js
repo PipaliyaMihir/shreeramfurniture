@@ -113,23 +113,33 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
     }
   }
 
-  // 2. Otherwise, attempt standard SMTP / Nodemailer (forcing IPv4 lookup to prevent ENETUNREACH on Render)
+  // 2. Otherwise, attempt standard SMTP / Nodemailer (resolving explicit IPv4 to prevent ENETUNREACH IPv6 on Render)
   const smtpUser = (process.env.SMTP_USER || '').trim();
   const smtpPass = (process.env.SMTP_PASS || '').trim();
 
   if (smtpUser && smtpPass) {
     try {
-      const targetHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
+      const rawHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
       const targetPort = Number(process.env.SMTP_PORT) || 465;
 
-      console.log(`✉️ Attempting SMTP send via ${targetHost}:${targetPort} (IPv4 forced via custom lookup)...`);
+      // Force DNS to return IPv4 address directly so Nodemailer NEVER attempts IPv6 (2404:6800...)
+      let resolvedHost = rawHost;
+      try {
+        const dnsPromises = require('dns').promises;
+        const lookupRes = await dnsPromises.lookup(rawHost, { family: 4 });
+        if (lookupRes && lookupRes.address) {
+          resolvedHost = lookupRes.address;
+        }
+      } catch (dnsErr) {
+        console.log('ℹ️ DNS lookup notice:', dnsErr.message);
+      }
+
+      console.log(`✉️ Attempting SMTP send via ${rawHost} (${resolvedHost}:${targetPort})...`);
 
       const transporter = nodemailer.createTransport({
-        host: targetHost,
+        host: resolvedHost,
         port: targetPort,
         secure: targetPort === 465,
-        family: 4,
-        lookup: ipv4Lookup, // Guarantees IPv4 DNS resolution for Nodemailer socket
         auth: {
           user: smtpUser,
           pass: smtpPass
@@ -137,7 +147,10 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
         connectionTimeout: 4000,
         greetingTimeout: 4000,
         socketTimeout: 5000,
-        tls: { rejectUnauthorized: false }
+        tls: {
+          servername: rawHost,
+          rejectUnauthorized: false
+        }
       });
 
       const mailOptions = {
@@ -164,7 +177,7 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
       console.log('✅ Automated email sent via SMTP successfully. Message ID:', info.messageId);
       return { success: true, info };
     } catch (error) {
-      console.log('ℹ️ Render environment notice: SMTP connection failed:', error.message);
+      console.log('ℹ️ Render environment notice: SMTP send notice:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -205,11 +218,14 @@ router.post('/quotation', async (req, res) => {
       personalizedBody = personalizedBody.replace('Hello', `Hello ${name}`);
     }
 
-    // Send auto-reply email to the client in the background
+    // Send auto-reply email to the client in the background without unhandled rejection errors
     sendAutomatedEmail(email, config.subject, personalizedBody, config.pdfUrl)
-      .catch(err => console.error('Error sending auto-reply email to client:', err));
-
-
+      .then(res => {
+        if (!res.success && res.error) {
+          console.log('ℹ️ Auto-reply background notice:', res.error);
+        }
+      })
+      .catch(err => console.log('ℹ️ Auto-reply background notice:', err.message));
 
     res.status(201).json({ message: 'Quotation request submitted successfully!', quotation });
   } catch (error) {
