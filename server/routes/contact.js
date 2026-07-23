@@ -32,8 +32,12 @@ const pdfFilter = (req, file, cb) => {
 const uploadPdf = multer({
   storage: pdfStorage,
   fileFilter: pdfFilter,
-  limits: { fileSize: 25 * 1024 * 1024 }
-});
+const dns = require('dns');
+
+// Force IPv4 lookup function for Nodemailer to prevent ENETUNREACH IPv6 errors
+const ipv4Lookup = (hostname, options, callback) => {
+  return dns.lookup(hostname, { family: 4 }, callback);
+};
 
 // Helper: send automated email
 async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
@@ -42,8 +46,11 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
     process.env.BREVO_KEY ||
     process.env.BREVO_APIKEY ||
     process.env.SENDINBLUE_API_KEY ||
+    process.env.BREVO_SMTP_KEY ||
     ''
   ).trim().replace(/^["']|["']$/g, '');
+
+  console.log(`[Email System] BREVO_API_KEY configured: ${brevoKey ? 'YES (' + brevoKey.substring(0, 6) + '...)' : 'NO'}`);
 
   // 1. If Brevo API key is available, use Brevo HTTP API (Port 443 HTTPS - 100% reliable on Render)
   if (brevoKey) {
@@ -106,7 +113,7 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
     }
   }
 
-  // 2. Otherwise, attempt standard SMTP / Nodemailer (forcing IPv4 family: 4 to prevent ENETUNREACH on Render)
+  // 2. Otherwise, attempt standard SMTP / Nodemailer (forcing IPv4 lookup to prevent ENETUNREACH on Render)
   const smtpUser = (process.env.SMTP_USER || '').trim();
   const smtpPass = (process.env.SMTP_PASS || '').trim();
 
@@ -115,13 +122,14 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
       const targetHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
       const targetPort = Number(process.env.SMTP_PORT) || 465;
 
-      console.log(`✉️ Attempting SMTP send via ${targetHost}:${targetPort} (IPv4 forced)...`);
+      console.log(`✉️ Attempting SMTP send via ${targetHost}:${targetPort} (IPv4 forced via custom lookup)...`);
 
       const transporter = nodemailer.createTransport({
         host: targetHost,
         port: targetPort,
         secure: targetPort === 465,
-        family: 4, // Force IPv4 to prevent ENETUNREACH IPv6 errors on cloud hosts like Render
+        family: 4,
+        lookup: ipv4Lookup, // Guarantees IPv4 DNS resolution for Nodemailer socket
         auth: {
           user: smtpUser,
           pass: smtpPass
@@ -286,24 +294,31 @@ router.delete('/quotations/:id', protect, async (req, res) => {
 
 // @GET /api/contact/test-email (public diagnostic)
 router.get('/test-email', async (req, res) => {
-  const toEmail = req.query.to || process.env.SMTP_USER || 'mpipaliya550@rku.ac.in';
+  const toEmail = req.query.to || process.env.SMTP_USER || process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com';
+  const brevoKey = (
+    process.env.BREVO_API_KEY ||
+    process.env.BREVO_KEY ||
+    process.env.BREVO_APIKEY ||
+    process.env.SENDINBLUE_API_KEY ||
+    process.env.BREVO_SMTP_KEY ||
+    ''
+  ).trim();
+
   try {
     console.log(`[Diagnostic] Attempting to send test email to: ${toEmail}`);
-    const info = await sendAutomatedEmail(
+    const result = await sendAutomatedEmail(
       toEmail,
       'Shree Ram Furniture Diagnostic Test',
-      'This is a diagnostic email from your website to verify if SMTP is working correctly.'
+      'This is a diagnostic email from your website to verify if email sending is working correctly.'
     );
+
     res.json({
-      status: 'success',
-      message: `Test email sent successfully to ${toEmail}`,
-      messageId: info.messageId,
-      smtpConfig: {
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: process.env.SMTP_PORT || 587,
-        user: process.env.SMTP_USER,
-        hasPass: !!process.env.SMTP_PASS
-      }
+      status: result.success !== false ? 'success' : 'warning',
+      message: `Test email process executed for ${toEmail}`,
+      brevoConfigured: !!brevoKey,
+      brevoKeyPrefix: brevoKey ? brevoKey.substring(0, 8) + '...' : 'NOT_FOUND',
+      senderEmail: process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com',
+      resultDetails: result
     });
   } catch (error) {
     console.error('[Diagnostic] Test email failed:', error);
@@ -311,13 +326,7 @@ router.get('/test-email', async (req, res) => {
       status: 'error',
       message: 'Failed to send test email',
       error: error.message,
-      stack: error.stack,
-      smtpConfig: {
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: process.env.SMTP_PORT || 587,
-        user: process.env.SMTP_USER,
-        hasPass: !!process.env.SMTP_PASS
-      }
+      brevoConfigured: !!brevoKey
     });
   }
 });
