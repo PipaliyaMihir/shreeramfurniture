@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X } from 'lucide-react';
+import { Search, X, ChevronDown } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { getProducts, getCategories } from '../api';
+
+const PAGE_SIZE = 12; // Show 12 projects at a time
 
 const SkeletonCard = () => (
   <div className="rounded-2xl bg-dark-800 border border-white/[0.06] overflow-hidden animate-pulse">
@@ -20,9 +22,7 @@ const SkeletonCard = () => (
 const containerVariants = {
   hidden: {},
   visible: {
-    transition: {
-      staggerChildren: 0.08,
-    },
+    transition: { staggerChildren: 0.06 },
   },
 };
 
@@ -32,13 +32,15 @@ const ProductSection = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const [productsRes, categoriesRes] = await Promise.all([
-          getProducts({ limit: 100 }),
+          getProducts({ limit: 500 }),
           getCategories(),
         ]);
         const productsData = productsRes.data?.products || productsRes.data;
@@ -50,26 +52,27 @@ const ProductSection = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
+  // Sync search from URL params
   useEffect(() => {
     const syncSearchFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const searchParam = params.get('search');
-      if (searchParam !== null) {
-        setSearchQuery(searchParam);
-      }
+      if (searchParam !== null) setSearchQuery(searchParam);
     };
-
     syncSearchFromUrl();
     window.addEventListener('app-search-update', syncSearchFromUrl);
     return () => window.removeEventListener('app-search-update', syncSearchFromUrl);
   }, []);
 
+  // Reset pagination when filter/search changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeCategory, searchQuery]);
+
   const filteredProducts = products.filter((product) => {
-    // 1. Category Filter
     if (activeCategory !== 'all') {
       if (!product.categories || !Array.isArray(product.categories)) return false;
       const hasCat = product.categories.some((cat) => {
@@ -79,7 +82,6 @@ const ProductSection = () => {
       if (!hasCat) return false;
     }
 
-    // 2. Search Query Filter (detects name, description words, and category names)
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase().trim();
       const matchName = product.name?.toLowerCase().includes(q);
@@ -93,6 +95,19 @@ const ProductSection = () => {
 
     return true;
   });
+
+  // Only render the visible slice
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredProducts.length;
+
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    // Small delay so skeleton shows briefly then new cards appear
+    setTimeout(() => {
+      setVisibleCount((prev) => prev + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 400);
+  };
 
   return (
     <section id="projects" className="py-20 sm:py-28">
@@ -144,8 +159,8 @@ const ProductSection = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search projects, categories, or keywords (e.g. kitchen, wardrobe, desk)..."
-              className="w-full bg-dark-800/90 border border-white/[0.08] focus:border-gold-400/50 rounded-2xl py-3 pl-11 pr-10 text-sm text-gray-200 placeholder-gray-500 transition-all outline-none shadow-lg focus:shadow-glow"
+              placeholder="Search projects, categories or keywords..."
+              className="w-full bg-dark-800/90 border border-white/[0.08] focus:border-gold-400/50 rounded-2xl py-3 pl-11 pr-10 text-sm text-gray-200 placeholder-gray-500 transition-all outline-none shadow-lg"
             />
             {searchQuery && (
               <button
@@ -169,9 +184,7 @@ const ProductSection = () => {
         >
           <button
             onClick={() => setActiveCategory('all')}
-            className={
-              activeCategory === 'all' ? 'category-pill-active' : 'category-pill'
-            }
+            className={activeCategory === 'all' ? 'category-pill-active' : 'category-pill'}
           >
             All Projects
           </button>
@@ -183,11 +196,7 @@ const ProductSection = () => {
               <button
                 key={catName}
                 onClick={() => setActiveCategory(catName)}
-                className={
-                  activeCategory === catName
-                    ? 'category-pill-active'
-                    : 'category-pill'
-                }
+                className={activeCategory === catName ? 'category-pill-active' : 'category-pill'}
               >
                 {catIcon && <span className="mr-1.5">{catIcon}</span>}
                 {catName}
@@ -196,12 +205,18 @@ const ProductSection = () => {
           })}
         </motion.div>
 
+        {/* Project count indicator */}
+        {!loading && filteredProducts.length > 0 && (
+          <div className="text-center text-gray-500 text-xs mb-6">
+            Showing <span className="text-gold-400 font-semibold">{visibleProducts.length}</span> of{' '}
+            <span className="text-gray-300 font-semibold">{filteredProducts.length}</span> projects
+          </div>
+        )}
+
         {/* Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filteredProducts.length === 0 ? (
           <motion.div
@@ -213,20 +228,15 @@ const ProductSection = () => {
             <div className="w-16 h-16 rounded-full bg-dark-800 border border-white/[0.06] flex items-center justify-center mx-auto mb-5">
               <Search className="w-7 h-7 text-gold-400/60" />
             </div>
-            <p className="text-gray-300 text-lg font-display font-semibold">
-              No matching projects found
-            </p>
+            <p className="text-gray-300 text-lg font-display font-semibold">No matching projects found</p>
             <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">
               {searchQuery
-                ? `No results for "${searchQuery}"${activeCategory !== 'all' ? ` in ${activeCategory}` : ''}. Try searching another keyword or description term.`
+                ? `No results for "${searchQuery}"${activeCategory !== 'all' ? ` in ${activeCategory}` : ''}. Try a different keyword.`
                 : `No projects found in ${activeCategory}.`}
             </p>
             {(searchQuery || activeCategory !== 'all') && (
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setActiveCategory('all');
-                }}
+                onClick={() => { setSearchQuery(''); setActiveCategory('all'); }}
                 className="btn-outline mt-6 px-5 py-2 text-xs font-semibold text-gold-400 border-gold-400/30 hover:bg-gold-400/10"
               >
                 Reset Filters
@@ -234,19 +244,55 @@ const ProductSection = () => {
             )}
           </motion.div>
         ) : (
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          <>
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <AnimatePresence mode="popLayout">
+                {visibleProducts.map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Load More skeleton while fetching next batch */}
+            {loadingMore && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
+              </div>
+            )}
+
+            {/* Load More Button */}
+            {hasMore && !loadingMore && (
+              <motion.div
+                className="flex flex-col items-center mt-12 gap-3"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <p className="text-gray-500 text-xs">
+                  {filteredProducts.length - visibleCount} more projects available
+                </p>
+                <button
+                  onClick={handleLoadMore}
+                  className="inline-flex items-center gap-2 px-8 py-3 rounded-xl border border-gold-400/30 text-gold-400 text-sm font-semibold hover:bg-gold-400/10 hover:border-gold-400/60 transition-all duration-300"
+                >
+                  Load More Projects
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </motion.div>
+            )}
+
+            {/* All loaded indicator */}
+            {!hasMore && filteredProducts.length > PAGE_SIZE && (
+              <div className="text-center mt-10 text-gray-600 text-xs">
+                ✓ All {filteredProducts.length} projects loaded
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
