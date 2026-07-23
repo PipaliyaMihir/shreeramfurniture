@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowRight, Search } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import logoImg from '../assets/logo.png';
 
 const navLinks = [
@@ -13,7 +13,6 @@ const navLinks = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [headerSearch, setHeaderSearch] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -55,28 +54,6 @@ export default function Navbar() {
     }
   };
 
-  const handleHeaderSearch = (e) => {
-    e.preventDefault();
-    if (!headerSearch.trim()) return;
-    const query = encodeURIComponent(headerSearch.trim());
-    setMobileOpen(false);
-    if (location.pathname === '/') {
-      const newUrl = `${window.location.pathname}?search=${query}#projects`;
-      window.history.pushState(null, '', newUrl);
-      window.dispatchEvent(new Event('app-search-update'));
-      const el = document.getElementById('projects');
-      if (el) {
-        const offset = 80;
-        const bodyRect = document.body.getBoundingClientRect().top;
-        const elementRect = el.getBoundingClientRect().top;
-        const offsetPosition = elementRect - bodyRect - offset;
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-      }
-    } else {
-      navigate(`/?search=${query}#projects`);
-    }
-  };
-
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-dark-900/80 backdrop-blur-xl border-b border-white/[0.06] shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -103,29 +80,8 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Desktop Right — Search Bar + Get Free Quote CTA */}
+          {/* Desktop Right — Get Free Quote CTA */}
           <div className="hidden lg:flex items-center gap-3">
-            <form onSubmit={handleHeaderSearch} className="relative flex items-center">
-              <Search className="w-4 h-4 absolute left-3.5 text-gold-400 pointer-events-none" />
-              <input
-                type="text"
-                value={headerSearch}
-                onChange={(e) => setHeaderSearch(e.target.value)}
-                placeholder="Search projects..."
-                className="bg-dark-800/90 border border-white/[0.08] focus:border-gold-400/50 rounded-xl py-2 pl-9 pr-7 text-xs text-gray-200 placeholder-gray-500 w-44 focus:w-60 transition-all duration-300 outline-none shadow-inner"
-              />
-              {headerSearch && (
-                <button
-                  type="button"
-                  onClick={() => setHeaderSearch('')}
-                  className="absolute right-2.5 text-gray-400 hover:text-white transition-colors"
-                  title="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </form>
-
             <a
               href="#contact"
               onClick={(e) => handleSmoothScroll(e, '#contact')}
@@ -168,28 +124,7 @@ export default function Navbar() {
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="lg:hidden overflow-hidden bg-dark-900 border-b border-dark-600/30"
           >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6 pt-3 space-y-3">
-              {/* Mobile Header Search Bar */}
-              <form onSubmit={handleHeaderSearch} className="relative flex items-center px-1">
-                <Search className="w-4 h-4 absolute left-4 text-gold-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={headerSearch}
-                  onChange={(e) => setHeaderSearch(e.target.value)}
-                  placeholder="Search projects..."
-                  className="w-full bg-dark-800 border border-white/[0.08] focus:border-gold-400/50 rounded-xl py-2.5 pl-10 pr-8 text-xs text-gray-200 placeholder-gray-500 outline-none"
-                />
-                {headerSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setHeaderSearch('')}
-                    className="absolute right-3 text-gray-400 hover:text-white"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </form>
-
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6 pt-3 space-y-1">
               {navLinks.map((link, i) => (
                 <motion.a
                   key={link.name}
@@ -205,7 +140,7 @@ export default function Navbar() {
                 </motion.a>
               ))}
 
-              <div className="pt-4 border-t border-dark-600/30 space-y-2">
+              <div className="pt-4 border-t border-dark-600/30">
                 <a
                   href="#contact"
                   onClick={(e) => handleSmoothScroll(e, '#contact')}
