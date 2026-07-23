@@ -2,6 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+// Tell the browser to restore scroll position on refresh (not on navigation)
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'auto';
+}
+
 const HomePage = lazy(() => import('./pages/HomePage'));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));

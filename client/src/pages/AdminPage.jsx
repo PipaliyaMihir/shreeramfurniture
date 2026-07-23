@@ -645,13 +645,13 @@ function ProductsTab({ products, categories, onRefresh }) {
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gold-600" />
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gold-400" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search completed sites..."
-          className="input-field pl-11"
+          className="input-field-dark pl-11 text-white placeholder-gray-500"
         />
       </div>
 
@@ -1242,31 +1242,31 @@ function QuotationModal({ quotation, onClose }) {
           <h2 className="font-display text-xl font-bold text-dark-400">
             Quotation Request Details
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-dark-700/40 text-dark-500 hover:text-dark-400 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-dark-700 text-gray-500 hover:text-dark-400 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gold-600 uppercase tracking-wider mb-1.5">Client Name</label>
-            <p className="text-sm font-semibold text-dark-400 bg-dark-700/60 px-4 py-3 rounded-xl border border-dark-600/20">{quotation.name}</p>
+            <label className="block text-xs font-bold text-gold-500 uppercase tracking-wider mb-1.5">Client Name</label>
+            <p className="text-sm font-semibold text-dark-400 bg-dark-700 px-4 py-3 rounded-xl border border-dark-600/30">{quotation.name}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gold-600 uppercase tracking-wider mb-1.5">Email Address</label>
-              <a href={`mailto:${quotation.email}`} className="block text-sm font-semibold text-gold-600 hover:text-gold-500 transition-colors bg-dark-700/60 px-4 py-3 rounded-xl border border-dark-600/20 truncate">{quotation.email}</a>
+              <label className="block text-xs font-bold text-gold-500 uppercase tracking-wider mb-1.5">Email Address</label>
+              <a href={`mailto:${quotation.email}`} className="block text-sm font-semibold text-gold-600 hover:text-gold-500 transition-colors bg-dark-700 px-4 py-3 rounded-xl border border-dark-600/30 truncate">{quotation.email}</a>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gold-600 uppercase tracking-wider mb-1.5">Phone Number</label>
-              <a href={quotation.phone ? `tel:${quotation.phone}` : '#'} className="block text-sm font-semibold text-dark-400 bg-dark-700/60 px-4 py-3 rounded-xl border border-dark-600/20">{quotation.phone || '—'}</a>
+              <label className="block text-xs font-bold text-gold-500 uppercase tracking-wider mb-1.5">Phone Number</label>
+              <a href={quotation.phone ? `tel:${quotation.phone}` : '#'} className="block text-sm font-semibold text-dark-400 bg-dark-700 px-4 py-3 rounded-xl border border-dark-600/30">{quotation.phone || '—'}</a>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gold-600 uppercase tracking-wider mb-1.5">Submitted Date</label>
-            <p className="text-sm font-semibold text-dark-400 bg-dark-700/60 px-4 py-3 rounded-xl border border-dark-600/20">
+            <label className="block text-xs font-bold text-gold-500 uppercase tracking-wider mb-1.5">Submitted Date</label>
+            <p className="text-sm font-semibold text-dark-400 bg-dark-700 px-4 py-3 rounded-xl border border-dark-600/30">
               {new Date(quotation.createdAt).toLocaleDateString('en-IN', {
                 year: 'numeric',
                 month: 'long',
@@ -1278,8 +1278,8 @@ function QuotationModal({ quotation, onClose }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gold-600 uppercase tracking-wider mb-1.5">Message / Requirements</label>
-            <div className="text-sm text-dark-400 bg-dark-700/60 px-4 py-3 rounded-xl border border-dark-600/20 min-h-[120px] whitespace-pre-line leading-relaxed">
+            <label className="block text-xs font-bold text-gold-500 uppercase tracking-wider mb-1.5">Message / Requirements</label>
+            <div className="text-sm text-dark-400 bg-dark-700 px-4 py-3 rounded-xl border border-dark-600/30 min-h-[120px] whitespace-pre-line leading-relaxed">
               {quotation.message}
             </div>
           </div>
@@ -1581,12 +1581,22 @@ function SettingsTab() {
 export default function AdminPage() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [active, setActive] = useState('dashboard');
+  // Restore active tab from sessionStorage on refresh (cleared when tab is closed)
+  const [active, setActive] = useState(
+    () => sessionStorage.getItem('admin_active_tab') || 'dashboard'
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Save active tab on every change
+  const handleSetActive = (tab) => {
+    sessionStorage.setItem('admin_active_tab', tab);
+    setActive(tab);
+    setSidebarOpen(false);
+  };
 
   useEffect(() => {
     if (!isAdmin) navigate('/admin/login', { replace: true });
@@ -1617,7 +1627,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-dark-900 text-dark-400 flex">
       <Toaster position="top-right" />
-      <Sidebar active={active} setActive={setActive} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <Sidebar active={active} setActive={handleSetActive} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       {/* Main content */}
       <div className="flex-1 lg:ml-64 flex flex-col min-h-screen bg-dark-950">
