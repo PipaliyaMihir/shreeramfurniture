@@ -2,6 +2,13 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const dns = require('dns');
+
+// Force Node.js to prefer IPv4 over IPv6 to prevent ENETUNREACH errors on cloud hosts like Render
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const connectDB = require('./config/db');
 
 dotenv.config({ path: path.join(__dirname, '.env') });

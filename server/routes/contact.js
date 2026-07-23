@@ -37,11 +37,26 @@ const uploadPdf = multer({
 
 // Helper: send automated email
 async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
+  const brevoKey = (
+    process.env.BREVO_API_KEY ||
+    process.env.BREVO_KEY ||
+    process.env.BREVO_APIKEY ||
+    process.env.SENDINBLUE_API_KEY ||
+    ''
+  ).trim().replace(/^["']|["']$/g, '');
+
   // 1. If Brevo API key is available, use Brevo HTTP API (Port 443 HTTPS - 100% reliable on Render)
-  if (process.env.BREVO_API_KEY) {
-    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com';
+  if (brevoKey) {
+    const senderEmail = (
+      process.env.BREVO_SENDER_EMAIL ||
+      process.env.SMTP_USER ||
+      process.env.ADMIN_EMAIL ||
+      'admin@shreeramfurniture.com'
+    ).trim().replace(/^["']|["']$/g, '');
     const senderName = 'Shree Ram Furniture';
     
+    console.log(`✉️ Sending email via Brevo HTTP API to ${toEmail} (Sender: ${senderEmail})...`);
+
     const payload = {
       sender: { name: senderName, email: senderEmail },
       to: [{ email: toEmail }],
@@ -71,7 +86,7 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
         method: 'POST',
         headers: {
           'accept': 'application/json',
-          'api-key': process.env.BREVO_API_KEY,
+          'api-key': brevoKey,
           'content-type': 'application/json'
         },
         body: JSON.stringify(payload)
@@ -79,8 +94,8 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
 
       const data = await response.json();
       if (!response.ok) {
-        console.warn(`⚠️ Brevo API response notice: ${data.message || response.status}`);
-        return { success: false, error: data.message };
+        console.warn(`⚠️ Brevo API error response (${response.status}):`, data.message || JSON.stringify(data));
+        return { success: false, error: data.message || `Brevo status ${response.status}` };
       }
 
       console.log('✅ Automated email sent via Brevo API successfully. Message ID:', data.messageId);
@@ -91,30 +106,36 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
     }
   }
 
-  // 2. Otherwise, attempt standard SMTP / Nodemailer (with short 3s timeout for Render compatibility)
-  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  // 2. Otherwise, attempt standard SMTP / Nodemailer (forcing IPv4 family: 4 to prevent ENETUNREACH on Render)
+  const smtpUser = (process.env.SMTP_USER || '').trim();
+  const smtpPass = (process.env.SMTP_PASS || '').trim();
+
+  if (smtpUser && smtpPass) {
     try {
-      const targetHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+      const targetHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
       const targetPort = Number(process.env.SMTP_PORT) || 465;
+
+      console.log(`✉️ Attempting SMTP send via ${targetHost}:${targetPort} (IPv4 forced)...`);
 
       const transporter = nodemailer.createTransport({
         host: targetHost,
         port: targetPort,
         secure: targetPort === 465,
+        family: 4, // Force IPv4 to prevent ENETUNREACH IPv6 errors on cloud hosts like Render
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
+          user: smtpUser,
+          pass: smtpPass
         },
-        connectionTimeout: 3000, // 3s max connection timeout
-        greetingTimeout: 3000,
-        socketTimeout: 4000,
+        connectionTimeout: 4000,
+        greetingTimeout: 4000,
+        socketTimeout: 5000,
         tls: { rejectUnauthorized: false }
       });
 
       const mailOptions = {
-        from: `"Shree Ram Furniture" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@shreeramfurniture.com'}>`,
+        from: `"Shree Ram Furniture" <${(process.env.SMTP_FROM || smtpUser || 'no-reply@shreeramfurniture.com').trim()}>`,
         to: toEmail,
-        replyTo: process.env.SMTP_USER || 'mpipaliya550@rku.ac.in',
+        replyTo: smtpUser || 'admin@shreeramfurniture.com',
         subject: subject,
         text: textBody,
       };
@@ -135,13 +156,13 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
       console.log('✅ Automated email sent via SMTP successfully. Message ID:', info.messageId);
       return { success: true, info };
     } catch (error) {
-      console.log('ℹ️ Render environment notice: SMTP connection timed out (Render blocks raw outbound SMTP ports). Add BREVO_API_KEY in Render environment variables for instant HTTPS email sending.');
+      console.log('ℹ️ Render environment notice: SMTP connection failed:', error.message);
       return { success: false, error: error.message };
     }
   }
 
   // 3. Fallback when no email keys are configured
-  console.log(`ℹ️ Email notification queued for ${toEmail} (Quotation saved in database). Add BREVO_API_KEY in Render for automatic email sending.`);
+  console.log(`ℹ️ Email notification request received for ${toEmail} (Quotation saved in database).`);
   return { success: true, mocked: true };
 }
 
