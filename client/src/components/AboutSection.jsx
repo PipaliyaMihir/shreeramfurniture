@@ -151,7 +151,7 @@ export default function AboutSection() {
             </motion.span>
 
             <motion.h2 custom={1} variants={fadeUp} className="section-title mt-3">
-              Bespoke On-Site Furniture Since&nbsp;2016
+              Bespoke On-Site Furniture Since&nbsp;2025
             </motion.h2>
 
             <motion.p custom={2} variants={fadeUp} className="section-subtitle mt-5 max-w-lg">

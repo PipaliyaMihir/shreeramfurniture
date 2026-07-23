@@ -55,17 +55,36 @@ const ProductSection = () => {
     fetchData();
   }, []);
 
-  // Sync search from URL params
+  // Sync search and category from URL params
   useEffect(() => {
-    const syncSearchFromUrl = () => {
+    const syncFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       const searchParam = params.get('search');
       if (searchParam !== null) setSearchQuery(searchParam);
+
+      const categoryParam = params.get('category');
+      if (categoryParam !== null) {
+        const decoded = decodeURIComponent(categoryParam).trim();
+        if (categories.length > 0) {
+          const match = categories.find((c) => {
+            const name = (typeof c === 'string' ? c : c.name || '').toLowerCase();
+            const target = decoded.toLowerCase();
+            return name === target || name.includes(target) || target.includes(name);
+          });
+          if (match) {
+            setActiveCategory(typeof match === 'string' ? match : match.name || decoded);
+          } else {
+            setActiveCategory(decoded);
+          }
+        } else {
+          setActiveCategory(decoded);
+        }
+      }
     };
-    syncSearchFromUrl();
-    window.addEventListener('app-search-update', syncSearchFromUrl);
-    return () => window.removeEventListener('app-search-update', syncSearchFromUrl);
-  }, []);
+    syncFromUrl();
+    window.addEventListener('app-search-update', syncFromUrl);
+    return () => window.removeEventListener('app-search-update', syncFromUrl);
+  }, [categories]);
 
   // Reset pagination when filter/search changes
   useEffect(() => {
@@ -76,8 +95,9 @@ const ProductSection = () => {
     if (activeCategory !== 'all') {
       if (!product.categories || !Array.isArray(product.categories)) return false;
       const hasCat = product.categories.some((cat) => {
-        const catName = typeof cat === 'string' ? cat : cat.name || '';
-        return catName === activeCategory;
+        const catName = (typeof cat === 'string' ? cat : cat.name || '').toLowerCase();
+        const target = activeCategory.toLowerCase();
+        return catName === target || catName.includes(target) || target.includes(catName);
       });
       if (!hasCat) return false;
     }

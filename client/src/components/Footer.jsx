@@ -43,6 +43,30 @@ export default function Footer() {
       }
     }
   };
+  const handleServiceClick = (e, serviceName) => {
+    e.preventDefault();
+    const query = encodeURIComponent(serviceName);
+    if (location.pathname === '/') {
+      const newUrl = `${window.location.pathname}?category=${query}#projects`;
+      window.history.pushState(null, '', newUrl);
+      window.dispatchEvent(new Event('app-search-update'));
+      const el = document.getElementById('projects');
+      if (el) {
+        const offset = 80;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = el.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      navigate(`/?category=${query}#projects`);
+    }
+  };
+
   return (
     <footer className="relative bg-dark-900 border-t border-dark-600/30">
       {/* ── CTA Banner ── */}
@@ -61,8 +85,8 @@ export default function Footer() {
             let&apos;s bring your vision to life.
           </p>
           <a
-            href="#contact"
-            onClick={(e) => handleSmoothScroll(e, '#contact')}
+            href="#contact-form"
+            onClick={(e) => handleSmoothScroll(e, '#contact-form')}
             className="btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold rounded-xl"
           >
             Get Free Consultation
@@ -85,7 +109,7 @@ export default function Footer() {
               </div>
               <p className="text-gray-405 text-sm leading-relaxed mb-6">
                 Premium custom on-site furniture &amp; carpentry solutions for residential and
-                commercial spaces. Crafting beautiful, durable custom furniture since 2010.
+                commercial spaces. Crafting beautiful, durable custom furniture since 2025.
               </p>
               <div className="space-y-3">
                 <a
@@ -104,7 +128,7 @@ export default function Footer() {
                 </a>
                 <div className="flex items-start gap-2.5 text-sm text-gray-400">
                   <MapPin className="w-4 h-4 mt-0.5 text-gold-500/70 shrink-0" />
-                  <span>123, Furniture Lane, Craft City, India</span>
+                  <span>Rajkot &amp; Gondal, Gujarat, India</span>
                 </div>
               </div>
             </div>
@@ -119,7 +143,7 @@ export default function Footer() {
                   <li key={service}>
                     <a
                       href="#projects"
-                      onClick={(e) => handleSmoothScroll(e, '#projects')}
+                      onClick={(e) => handleServiceClick(e, service)}
                       className="group flex items-center gap-2 text-sm text-gray-400 hover:text-primary-600 transition-colors duration-300"
                     >
                       <ArrowRight className="w-3 h-3 text-gold-400/50 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all duration-300" />

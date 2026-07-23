@@ -83,8 +83,8 @@ export default function Navbar() {
           {/* Desktop Right — Get Free Quote CTA */}
           <div className="hidden lg:flex items-center gap-3">
             <a
-              href="#contact"
-              onClick={(e) => handleSmoothScroll(e, '#contact')}
+              href="#contact-form"
+              onClick={(e) => handleSmoothScroll(e, '#contact-form')}
               className="btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl shrink-0"
             >
               Get Free Quote
@@ -142,8 +142,8 @@ export default function Navbar() {
 
               <div className="pt-4 border-t border-dark-600/30">
                 <a
-                  href="#contact"
-                  onClick={(e) => handleSmoothScroll(e, '#contact')}
+                  href="#contact-form"
+                  onClick={(e) => handleSmoothScroll(e, '#contact-form')}
                   className="btn-primary flex items-center justify-center gap-2 w-full px-5 py-3 text-sm font-semibold rounded-xl"
                 >
                   Get Free Quote

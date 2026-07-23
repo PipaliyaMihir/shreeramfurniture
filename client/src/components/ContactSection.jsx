@@ -95,6 +95,7 @@ export default function ContactSection() {
 
           {/* Contact & Quotation Form */}
           <motion.div
+            id="contact-form"
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -113,7 +114,7 @@ export default function ContactSection() {
                       required
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="Rahul Sharma"
+                      placeholder="Enter You Good Name"
                       className="input-field"
                     />
                   </div>
@@ -123,7 +124,7 @@ export default function ContactSection() {
                       type="tel"
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      placeholder="+91 98765 43210"
+                      placeholder="Enter Phone Number"
                       className="input-field"
                     />
                   </div>
@@ -135,7 +136,7 @@ export default function ContactSection() {
                     required
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="name@email.com"
+                    placeholder="Enter Your Email"
                     className="input-field"
                   />
                 </div>
