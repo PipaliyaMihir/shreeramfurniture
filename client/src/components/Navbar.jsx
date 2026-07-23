@@ -30,17 +30,25 @@ export default function Navbar() {
       document.body.style.overflow = '';
       setMobileOpen(false);
       const id = href.slice(1);
-      if (location.pathname === '/') {
+
+      const performScroll = () => {
+        if (id === 'home') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
         const el = document.getElementById(id);
         if (el) {
-          setTimeout(() => {
-            const offset = 80;
-            const bodyRect = document.body.getBoundingClientRect().top;
-            const elementRect = el.getBoundingClientRect().top;
-            const offsetPosition = elementRect - bodyRect - offset;
-            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-          }, 350);
+          const offset = 80;
+          const bodyRect = document.body.getBoundingClientRect().top;
+          const elementRect = el.getBoundingClientRect().top;
+          const offsetPosition = elementRect - bodyRect - offset;
+          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
         }
+      };
+
+      if (location.pathname === '/') {
+        performScroll();
+        setTimeout(performScroll, 80);
       } else {
         navigate('/' + href);
       }

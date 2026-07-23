@@ -25,20 +25,33 @@ export default function HomePage() {
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
   useEffect(() => {
-    if (window.location.hash) {
-      const id = window.location.hash.slice(1);
-      const el = document.getElementById(id);
-      if (el) {
-        setTimeout(() => {
-          const offset = 80;
-          const bodyRect = document.body.getBoundingClientRect().top;
-          const elementRect = el.getBoundingClientRect().top;
-          const elementPosition = elementRect - bodyRect;
-          const offsetPosition = elementPosition - offset;
-          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-        }, 150);
+    const handleHashChange = () => {
+      if (window.location.hash) {
+        const id = window.location.hash.slice(1);
+        const scrollToElement = () => {
+          if (id === 'home') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+          const el = document.getElementById(id);
+          if (el) {
+            const offset = 80;
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = el.getBoundingClientRect().top;
+            const offsetPosition = elementRect - bodyRect - offset;
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+          }
+        };
+
+        scrollToElement();
+        setTimeout(scrollToElement, 150);
+        setTimeout(scrollToElement, 400);
       }
-    }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   // Fetch real reviews from the database — always live, no fake fallback

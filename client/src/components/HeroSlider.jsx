@@ -40,7 +40,8 @@ const contentVariants = {
 };
 
 export default function HeroSlider() {
-  const [slides, setSlides] = useState(DEFAULT_SLIDES);
+  const [slides, setSlides] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState({
     title: 'Crafted with Passion,\nBuilt to Last',
     subtitle: 'Premium custom furniture & on-site carpentry contracting',
@@ -53,6 +54,7 @@ export default function HeroSlider() {
   useEffect(() => {
     async function fetchData() {
       try {
+        setLoading(true);
         const [slidesRes, configRes] = await Promise.all([
           getHeroSlides(),
           getHeroConfig(),
@@ -60,12 +62,17 @@ export default function HeroSlider() {
         const slidesData = slidesRes.data || slidesRes;
         if (Array.isArray(slidesData) && slidesData.length > 0) {
           setSlides(slidesData);
+        } else {
+          setSlides(DEFAULT_SLIDES);
         }
         if (configRes.data) {
           setConfig(configRes.data);
         }
       } catch (err) {
         console.error('Failed to load Hero Slider data:', err);
+        setSlides(DEFAULT_SLIDES);
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
@@ -92,12 +99,23 @@ export default function HeroSlider() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const pad = (n) => String(n).padStart(2, '0');
+  if (loading || !slides.length) {
+    return (
+      <section id="home" className="relative h-screen w-full overflow-hidden bg-dark-900 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-dark-900/80 to-black/90 animate-pulse" />
+        <div className="relative z-10 text-center space-y-4 max-w-2xl px-4">
+          <div className="h-6 w-36 bg-dark-700/60 rounded-full mx-auto animate-pulse" />
+          <div className="h-14 w-full bg-dark-700/50 rounded-2xl mx-auto animate-pulse" />
+          <div className="h-5 w-3/4 bg-dark-700/30 rounded-lg mx-auto animate-pulse" />
+        </div>
+      </section>
+    );
+  }
 
   const slide = slides[current];
-  const imageSrc = slide.image?.startsWith('http')
+  const imageSrc = slide?.image?.startsWith('http')
     ? slide.image
-    : slide.image || '';
+    : slide?.image || '';
 
   return (
     <section
