@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, X, Star, ExternalLink,
+  ArrowLeft, ChevronLeft, ChevronRight, ChevronDown, X, Star, ExternalLink,
   Send, MessageSquare, ZoomIn, ZoomOut, RotateCcw
 } from 'lucide-react';
 import { getProduct, getProducts, rateProduct } from '../api';
