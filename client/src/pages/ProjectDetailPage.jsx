@@ -199,18 +199,29 @@ function ReviewsList({ reviews = [] }) {
 // ── Enhanced Fullscreen Lightbox Modal ────────────────────
 function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onNext }) {
   const [zoom, setZoom] = useState(1);
+  const [resetKey, setResetKey] = useState(0);
 
-  // Reset zoom whenever image index changes
+  // Reset zoom and position whenever image index changes
   useEffect(() => {
     setZoom(1);
+    setResetKey((prev) => prev + 1);
   }, [currentIndex]);
 
   const zoomIn = () => setZoom((prev) => Math.min(prev + 0.5, 4));
   const zoomOut = () => setZoom((prev) => Math.max(prev - 0.5, 1));
-  const resetZoom = () => setZoom(1);
+  
+  // Restart / Reset button resets image size to 1x and position back to center (0,0)
+  const resetZoomAndPosition = () => {
+    setZoom(1);
+    setResetKey((prev) => prev + 1);
+  };
 
   const toggleZoom = () => {
-    setZoom((prev) => (prev > 1 ? 1 : 2));
+    if (zoom > 1) {
+      resetZoomAndPosition();
+    } else {
+      setZoom(2);
+    }
   };
 
   const handleWheel = (e) => {
@@ -225,15 +236,19 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') onPrev();
-      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') onNext();
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        if (currentIndex > 0) onPrev();
+      }
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        if (currentIndex < images.length - 1) onNext();
+      }
       if (e.key === '+' || e.key === '=') zoomIn();
       if (e.key === '-') zoomOut();
-      if (e.key === 'r' || e.key === 'R') resetZoom();
+      if (e.key === 'r' || e.key === 'R') resetZoomAndPosition();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, onPrev, onNext]);
+  }, [onClose, onPrev, onNext, currentIndex, images.length]);
 
   // Touch / Drag swipe handler for Left & Right slide
   const handleDragEnd = (event, info) => {
@@ -241,9 +256,9 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
     const offset = info.offset.x;
     const velocity = info.velocity.x;
     if (offset < -50 || velocity < -300) {
-      onNext();
+      if (currentIndex < images.length - 1) onNext();
     } else if (offset > 50 || velocity > 300) {
-      onPrev();
+      if (currentIndex > 0) onPrev();
     }
   };
 
@@ -266,7 +281,7 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
           {currentIndex + 1} / {images.length}
         </div>
 
-        {/* Action Buttons: Zoom In, Zoom Out, Reset, Close */}
+        {/* Action Buttons: Zoom In (+), Zoom Out (-), Restart (Reset), Close (X) — ALWAYS VISIBLE */}
         <div className="flex items-center gap-2">
           <button
             onClick={zoomIn}
@@ -277,21 +292,18 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
           </button>
           <button
             onClick={zoomOut}
-            disabled={zoom <= 1}
-            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200 disabled:opacity-40"
+            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
             title="Zoom Out (-)"
           >
             <ZoomOut size={18} />
           </button>
-          {zoom > 1 && (
-            <button
-              onClick={resetZoom}
-              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-              title="Reset Zoom"
-            >
-              <RotateCcw size={18} />
-            </button>
-          )}
+          <button
+            onClick={resetZoomAndPosition}
+            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+            title="Restart / Reset Original Size & Position (R)"
+          >
+            <RotateCcw size={18} />
+          </button>
           <button
             onClick={onClose}
             className="p-2.5 rounded-full bg-white/15 hover:bg-red-500/80 text-white transition-colors duration-200 ml-2"
@@ -302,30 +314,31 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
         </div>
       </div>
 
-      {/* ── Left / Right Slide Arrow Buttons ── */}
-      {images.length > 1 && (
-        <>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrev();
-            }}
-            className="absolute left-3 md:left-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-sm transition-all duration-200 active:scale-95 shadow-xl"
-            title="Previous (Left Arrow)"
-          >
-            <ChevronLeft size={30} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onNext();
-            }}
-            className="absolute right-3 md:right-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-sm transition-all duration-200 active:scale-95 shadow-xl"
-            title="Next (Right Arrow)"
-          >
-            <ChevronRight size={30} />
-          </button>
-        </>
+      {/* ── Left / Right Arrow Buttons — HIDDEN ON MOBILE (swipe only), VISIBLE ON LAPTOP (md:flex) ── */}
+      {currentIndex > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPrev();
+          }}
+          className="hidden md:flex absolute left-4 md:left-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-sm transition-all duration-200 active:scale-95 shadow-xl items-center justify-center"
+          title="Previous (Left Arrow)"
+        >
+          <ChevronLeft size={30} />
+        </button>
+      )}
+
+      {currentIndex < images.length - 1 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+          className="hidden md:flex absolute right-4 md:right-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-sm transition-all duration-200 active:scale-95 shadow-xl items-center justify-center"
+          title="Next (Right Arrow)"
+        >
+          <ChevronRight size={30} />
+        </button>
       )}
 
       {/* ── Slide Image Container with Drag & Zoom ── */}
@@ -335,7 +348,7 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
         onClick={(e) => e.stopPropagation()}
       >
         <motion.div
-          key={currentIndex}
+          key={`${currentIndex}-${resetKey}`}
           drag={zoom === 1 ? 'x' : true}
           dragConstraints={
             zoom === 1
@@ -457,12 +470,14 @@ export default function ProjectDetailPage() {
     document.body.style.overflow = '';
   }, []);
 
+  // Stops at index 0 (1 of N — end of left)
   const goLightboxPrev = useCallback(() => {
-    setLightboxIndex((prev) => (prev === 0 ? lightboxImages.length - 1 : prev - 1));
-  }, [lightboxImages.length]);
+    setLightboxIndex((prev) => Math.max(prev - 1, 0));
+  }, []);
 
+  // Stops at last index (N of N — end of right)
   const goLightboxNext = useCallback(() => {
-    setLightboxIndex((prev) => (prev === lightboxImages.length - 1 ? 0 : prev + 1));
+    setLightboxIndex((prev) => Math.min(prev + 1, lightboxImages.length - 1));
   }, [lightboxImages.length]);
 
   const relatedProjects = allProjects
