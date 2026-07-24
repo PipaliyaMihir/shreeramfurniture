@@ -209,20 +209,26 @@ const ProductSection = () => {
             All Projects
           </button>
 
-          {categories.map((cat) => {
-            const catName = typeof cat === 'string' ? cat : cat.name || '';
-            const catIcon = typeof cat === 'object' ? cat.icon || '' : '';
-            return (
-              <button
-                key={catName}
-                onClick={() => setActiveCategory(catName)}
-                className={activeCategory === catName ? 'category-pill-active' : 'category-pill'}
-              >
-                {catIcon && <span className="mr-1.5">{catIcon}</span>}
-                {catName}
-              </button>
-            );
-          })}
+          {[...categories]
+            .sort((a, b) => {
+              const orderA = typeof a === 'object' && a.order !== undefined ? Number(a.order) : 999;
+              const orderB = typeof b === 'object' && b.order !== undefined ? Number(b.order) : 999;
+              return orderA - orderB;
+            })
+            .map((cat) => {
+              const catName = typeof cat === 'string' ? cat : cat.name || '';
+              const catIcon = typeof cat === 'object' ? cat.icon || '' : '';
+              return (
+                <button
+                  key={catName}
+                  onClick={() => setActiveCategory(catName)}
+                  className={activeCategory === catName ? 'category-pill-active' : 'category-pill'}
+                >
+                  {catIcon && <span className="mr-1.5">{catIcon}</span>}
+                  {catName}
+                </button>
+              );
+            })}
         </motion.div>
 
         {/* Project count indicator */}

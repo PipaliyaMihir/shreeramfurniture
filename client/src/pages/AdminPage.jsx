@@ -742,20 +742,22 @@ function ProductsTab({ products, categories, onRefresh }) {
 }
 
 // ───────────────── Categories Tab ─────────────────
-function CategoriesTab({ categories, onRefresh }) {
+function CategoriesTab({ categories = [], onRefresh }) {
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [form, setForm] = useState({ name: '', description: '', icon: '🛋️', order: 0 });
-  const [editForm, setEditForm] = useState({ name: '', description: '', icon: '🛋️', order: 0 });
+  const [form, setForm] = useState({ name: '', description: '', icon: '🛋️', order: (categories.length + 1) || 1 });
+  const [editForm, setEditForm] = useState({ name: '', description: '', icon: '🛋️', order: 1 });
   const [saving, setSaving] = useState(false);
+
+  const sortedCategories = [...categories].sort((a, b) => (Number(a.order || 0) - Number(b.order || 0)));
 
   const handleCreate = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await createCategory(form);
+      await createCategory({ ...form, order: Number(form.order || 0) });
       toast.success('Category created!');
-      setForm({ name: '', description: '', icon: '🛋️', order: 0 });
+      setForm({ name: '', description: '', icon: '🛋️', order: categories.length + 2 });
       setShowForm(false);
       onRefresh();
     } catch (err) {
@@ -771,7 +773,7 @@ function CategoriesTab({ categories, onRefresh }) {
       name: cat.name || '',
       description: cat.description || '',
       icon: cat.icon || '🛋️',
-      order: cat.order || 0,
+      order: cat.order !== undefined ? Number(cat.order) : 1,
     });
   };
 
@@ -780,7 +782,7 @@ function CategoriesTab({ categories, onRefresh }) {
     if (!editingCategory) return;
     setSaving(true);
     try {
-      await updateCategory(editingCategory._id, editForm);
+      await updateCategory(editingCategory._id, { ...editForm, order: Number(editForm.order || 0) });
       toast.success('Category updated successfully!');
       setEditingCategory(null);
       onRefresh();
@@ -806,8 +808,8 @@ function CategoriesTab({ categories, onRefresh }) {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-display text-2xl font-bold text-dark-400">Categories</h1>
-          <p className="text-gray-500 text-sm">{categories.length} categories</p>
+          <h1 className="font-display text-2xl font-bold text-dark-400">Categories & Ordering</h1>
+          <p className="text-gray-500 text-sm">Manage category names, icons, descriptions, and display position order (1, 2, 3...).</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary py-2.5">
           <Plus size={18} /> Add Category
@@ -821,29 +823,41 @@ function CategoriesTab({ categories, onRefresh }) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="admin-card mb-6 bg-dark-800 border-dark-600/35 text-left"
+            className="admin-card mb-6 bg-dark-800 border-dark-600/35 text-left p-6 rounded-2xl"
           >
             <h3 className="font-semibold text-dark-400 mb-4">New Category</h3>
-            <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-500 mb-1">Name *</label>
+                <label className="block text-sm font-semibold text-gray-500 mb-1">Category Name *</label>
                 <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Modular Kitchen" className="input-field" />
+                  placeholder="e.g. Guest Bedroom" className="input-field" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-500 mb-1">Icon (emoji)</label>
                 <input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })}
-                  placeholder="🍳" className="input-field" />
+                  placeholder="🛏️" className="input-field" />
               </div>
-              <div className="sm:col-span-2">
+              <div>
+                <label className="block text-sm font-semibold text-gold-500 mb-1">Display Position Order (#) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={form.order}
+                  onChange={(e) => setForm({ ...form, order: e.target.value })}
+                  placeholder="1, 2, 3..."
+                  className="input-field"
+                />
+              </div>
+              <div className="sm:col-span-3">
                 <label className="block text-sm font-semibold text-gray-500 mb-1">Description / Subtitle</label>
                 <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="e.g. Bright and Functional Kitchen" className="input-field" />
+                  placeholder="e.g. Cozy and Guest Ready Space" className="input-field" />
               </div>
-              <div className="sm:col-span-2 flex gap-3">
+              <div className="sm:col-span-3 flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="btn-outline">Cancel</button>
                 <button type="submit" disabled={saving} className="btn-primary py-2 disabled:opacity-70">
-                  {saving ? 'Saving...' : <><Plus size={16} /> Create</>}
+                  {saving ? 'Saving...' : <><Plus size={16} /> Create Category</>}
                 </button>
               </div>
             </form>
@@ -881,14 +895,28 @@ function CategoriesTab({ categories, onRefresh }) {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-1">Icon (emoji)</label>
-                  <input
-                    value={editForm.icon}
-                    onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
-                    placeholder="🛋️"
-                    className="input-field"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1">Icon (emoji)</label>
+                    <input
+                      value={editForm.icon}
+                      onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
+                      placeholder="🛋️"
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gold-500 mb-1">Position Order (#) *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={editForm.order}
+                      onChange={(e) => setEditForm({ ...editForm, order: e.target.value })}
+                      placeholder="1"
+                      className="input-field font-bold"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -918,20 +946,25 @@ function CategoriesTab({ categories, onRefresh }) {
 
       {/* Category List Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {categories.map((cat) => (
-          <div key={cat._id} className="admin-card flex items-center justify-between bg-dark-800 border-dark-600/35 p-4 rounded-2xl">
+        {sortedCategories.map((cat) => (
+          <div key={cat._id} className="admin-card flex items-center justify-between bg-dark-800 border-dark-600/35 p-4 rounded-2xl relative">
             <div className="flex items-center gap-3 min-w-0 pr-2">
               <span className="text-3xl shrink-0">{cat.icon}</span>
               <div className="text-left min-w-0">
-                <p className="font-semibold text-dark-400 text-left truncate">{cat.name}</p>
-                <p className="text-xs text-gray-500 text-left line-clamp-2">{cat.description || 'No description'}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-gold-500 bg-gold-400/10 px-2 py-0.5 rounded-full border border-gold-400/20">
+                    Pos #{cat.order ?? 0}
+                  </span>
+                  <p className="font-semibold text-dark-400 text-left truncate">{cat.name}</p>
+                </div>
+                <p className="text-xs text-gray-500 text-left line-clamp-2 mt-0.5">{cat.description || 'No description'}</p>
               </div>
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={() => handleOpenEdit(cat)}
                 className="p-2 text-gold-400 hover:bg-gold-400/10 rounded-lg transition-colors"
-                title="Edit Category"
+                title="Edit Category & Order Position"
               >
                 <Pencil size={16} />
               </button>
