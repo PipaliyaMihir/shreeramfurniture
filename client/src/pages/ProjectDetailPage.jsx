@@ -29,8 +29,8 @@ function StarRating({ rating = 4.5, size = 18 }) {
             i <= Math.floor(rating)
               ? 'fill-amber-400 text-amber-400'
               : i - 0.5 <= rating
-              ? 'fill-amber-400/50 text-amber-400'
-              : 'fill-gray-600 text-gray-600'
+                ? 'fill-amber-400/50 text-amber-400'
+                : 'fill-gray-600 text-gray-600'
           }
         />
       ))}
@@ -109,11 +109,10 @@ function ReviewForm({ projectId, onSubmitSuccess }) {
             >
               <Star
                 size={28}
-                className={`transition-colors duration-150 ${
-                  i <= (hoverRating || rating)
-                    ? 'fill-gold-400 text-gold-400'
-                    : 'fill-transparent text-gray-500 hover:text-gold-300'
-                }`}
+                className={`transition-colors duration-150 ${i <= (hoverRating || rating)
+                  ? 'fill-gold-400 text-gold-400'
+                  : 'fill-transparent text-gray-500 hover:text-gold-300'
+                  }`}
               />
             </button>
           ))}
@@ -178,7 +177,7 @@ function ReviewsList({ reviews = [] }) {
             <div className="flex items-center justify-between gap-2 mb-1">
               <p className="text-sm font-semibold text-dark-400 truncate">{r.name}</p>
               <div className="flex items-center gap-0.5 flex-shrink-0">
-                {[1,2,3,4,5].map(i => (
+                {[1, 2, 3, 4, 5].map(i => (
                   <Star key={i} size={11} className={i <= r.rating ? 'fill-amber-400 text-amber-400' : 'fill-gray-600 text-gray-600'} />
                 ))}
               </div>
@@ -209,7 +208,7 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
 
   const zoomIn = () => setZoom((prev) => Math.min(prev + 0.5, 4));
   const zoomOut = () => setZoom((prev) => Math.max(prev - 0.5, 1));
-  
+
   // Restart / Reset button resets image size to 1x and position back to center (0,0)
   const resetZoomAndPosition = () => {
     setZoom(1);
@@ -281,32 +280,34 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
           {currentIndex + 1} / {images.length}
         </div>
 
-        {/* Action Buttons: Zoom In (+), Zoom Out (-), Restart (Reset), Close (X) — ALWAYS VISIBLE */}
+        {/* Action Buttons: Zoom & Reset hidden on mobile (use two-finger pinch zoom), visible on Laptop/Desktop (md:flex) */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={zoomIn}
-            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-            title="Zoom In (+)"
-          >
-            <ZoomIn size={18} />
-          </button>
-          <button
-            onClick={zoomOut}
-            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-            title="Zoom Out (-)"
-          >
-            <ZoomOut size={18} />
-          </button>
-          <button
-            onClick={resetZoomAndPosition}
-            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-            title="Restart / Reset Original Size & Position (R)"
-          >
-            <RotateCcw size={18} />
-          </button>
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              onClick={zoomIn}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+              title="Zoom In (+)"
+            >
+              <ZoomIn size={18} />
+            </button>
+            <button
+              onClick={zoomOut}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+              title="Zoom Out (-)"
+            >
+              <ZoomOut size={18} />
+            </button>
+            <button
+              onClick={resetZoomAndPosition}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+              title="Restart / Reset Original Size & Position (R)"
+            >
+              <RotateCcw size={18} />
+            </button>
+          </div>
           <button
             onClick={onClose}
-            className="p-2.5 rounded-full bg-white/15 hover:bg-red-500/80 text-white transition-colors duration-200 ml-2"
+            className="p-2.5 rounded-full bg-white/15 hover:bg-red-500/80 text-white transition-colors duration-200 ml-1"
             title="Close (Esc)"
           >
             <X size={20} />
@@ -729,7 +730,7 @@ export default function ProjectDetailPage() {
 
           {/* Right — Write a Review Form */}
           <div className="card p-6 self-start w-full">
-            <h4 className="text-sm font-semibold text-white uppercase tracking-widest mb-4 flex items-center gap-1.5">
+            <h4 className="text-sm font-semibold text-black uppercase tracking-widest mb-4 flex items-center gap-1.5">
               <MessageSquare size={16} className="text-gold-500" />
               Write a Review
             </h4>
