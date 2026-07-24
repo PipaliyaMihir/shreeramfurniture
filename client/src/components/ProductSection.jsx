@@ -4,7 +4,12 @@ import { Search, X, ChevronDown } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { getProducts, getCategories } from '../api';
 
-const PAGE_SIZE = 12; // Show 12 projects at a time
+const getInitialPageSize = () => {
+  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+    return 3; // 3 projects on mobile
+  }
+  return 6; // 6 projects on desktop (2 rows of 3 columns)
+};
 
 const SkeletonCard = () => (
   <div className="rounded-2xl bg-dark-800 border border-white/[0.06] overflow-hidden animate-pulse">
@@ -32,7 +37,7 @@ const ProductSection = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [visibleCount, setVisibleCount] = useState(getInitialPageSize);
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
@@ -88,7 +93,7 @@ const ProductSection = () => {
 
   // Reset pagination when filter/search changes
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
+    setVisibleCount(getInitialPageSize());
   }, [activeCategory, searchQuery]);
 
   const filteredProducts = products.filter((product) => {
@@ -122,11 +127,11 @@ const ProductSection = () => {
 
   const handleLoadMore = () => {
     setLoadingMore(true);
-    // Small delay so skeleton shows briefly then new cards appear
     setTimeout(() => {
-      setVisibleCount((prev) => prev + PAGE_SIZE);
+      const step = typeof window !== 'undefined' && window.innerWidth < 768 ? 3 : 6;
+      setVisibleCount((prev) => prev + step);
       setLoadingMore(false);
-    }, 400);
+    }, 250);
   };
 
   return (
@@ -194,9 +199,9 @@ const ProductSection = () => {
           </div>
         </motion.div>
 
-        {/* Category Filter Tabs */}
+        {/* Category Filter Tabs: Responsive (Mobile: Horizontal Scroll 1 row, Desktop: 2nd line wrap) */}
         <motion.div
-          className="flex flex-wrap justify-center items-center gap-2 sm:gap-2.5 max-w-5xl mx-auto mb-10 sm:mb-12 px-2"
+          className="flex md:flex-wrap overflow-x-auto md:overflow-visible items-center justify-start md:justify-center gap-2 sm:gap-2.5 max-w-5xl mx-auto mb-10 sm:mb-12 px-4 pb-2 md:pb-0 scrollbar-hide text-nowrap"
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -242,7 +247,7 @@ const ProductSection = () => {
         {/* Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+            {[...Array(getInitialPageSize())].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filteredProducts.length === 0 ? (
           <motion.div
@@ -313,7 +318,7 @@ const ProductSection = () => {
             )}
 
             {/* All loaded indicator */}
-            {!hasMore && filteredProducts.length > PAGE_SIZE && (
+            {!hasMore && filteredProducts.length > getInitialPageSize() && (
               <div className="text-center mt-10 text-gray-600 text-xs">
                 ✓ All {filteredProducts.length} projects loaded
               </div>

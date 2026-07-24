@@ -425,10 +425,16 @@ export default function ProjectDetailPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
+  const [visibleImageCount, setVisibleImageCount] = useState(10);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     setActiveSubCategory('all');
   }, [id]);
+
+  useEffect(() => {
+    setVisibleImageCount(10);
+  }, [activeSubCategory, id]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -454,6 +460,10 @@ export default function ProjectDetailPage() {
   const displayedImages = activeSubCategory === 'all'
     ? subCategories.reduce((acc, cat) => acc.concat(cat.images || []), [])
     : subCategories.find(cat => cat.name === activeSubCategory)?.images || [];
+
+  const imagesToDisplay = (activeSubCategory === 'all' && displayedImages.length > visibleImageCount)
+    ? displayedImages.slice(0, visibleImageCount)
+    : displayedImages;
 
   const lightboxImages = displayedImages.length
     ? displayedImages.map(getImageUrl)
@@ -639,8 +649,7 @@ export default function ProjectDetailPage() {
 
           {subCategories.length > 1 && (
             <div
-              className="flex overflow-x-auto gap-2 mb-8 pb-2 scrollbar-hide"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              className="flex md:flex-wrap overflow-x-auto md:overflow-visible gap-2 mb-8 pb-2 md:pb-0 scrollbar-hide text-nowrap"
             >
               <button
                 onClick={() => setActiveSubCategory('all')}
@@ -661,13 +670,13 @@ export default function ProjectDetailPage() {
           )}
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-            {displayedImages.map((src, i) => (
+            {imagesToDisplay.map((src, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
+                transition={{ duration: 0.4, delay: (i % 10) * 0.04 }}
                 className="img-zoom rounded-xl cursor-pointer group relative overflow-hidden aspect-[4/3]"
                 onClick={() => openLightbox(i)}
               >
@@ -685,6 +694,26 @@ export default function ProjectDetailPage() {
               </motion.div>
             ))}
           </div>
+
+          {/* See More Images button for All Work category when images > 10 */}
+          {activeSubCategory === 'all' && displayedImages.length > visibleImageCount && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center mt-10 gap-3"
+            >
+              <p className="text-gray-500 text-xs">
+                Showing {visibleImageCount} of {displayedImages.length} images in All Work
+              </p>
+              <button
+                onClick={() => setVisibleImageCount((prev) => prev + 10)}
+                className="btn-outline flex items-center gap-2 px-8 py-3 rounded-xl border border-gold-400/40 text-gold-400 text-sm font-semibold hover:bg-gold-400/10 transition-all duration-300 shadow-md"
+              >
+                See More Images
+                <ChevronDown size={18} />
+              </button>
+            </motion.div>
+          )}
         </section>
       )}
 
