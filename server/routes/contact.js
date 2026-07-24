@@ -33,7 +33,7 @@ const uploadPdf = multer({
 });
 
 // Helper to generate fast-loading responsive HTML email layout with Logo -> Text -> Catalog -> Footer
-function generateEmailHtml(textBody, pdfPath) {
+function generateEmailHtml(textBody, pdfPath, customLogoUrl) {
   const paragraphs = textBody
     ? textBody
         .split('\n')
@@ -49,7 +49,13 @@ function generateEmailHtml(textBody, pdfPath) {
     'https://shreeramfurniture.onrender.com'
   ).replace(/\/$/, '');
 
-  const logoUrl = `${serverBaseUrl}/uploads/logo.png`;
+  // Resolve Header Logo URL (Custom CDN/Uploaded logo or default site logo)
+  let logoUrl = `${serverBaseUrl}/uploads/logo.png`;
+  if (customLogoUrl && customLogoUrl.trim()) {
+    logoUrl = customLogoUrl.startsWith('http')
+      ? customLogoUrl
+      : `${serverBaseUrl}${customLogoUrl.startsWith('/') ? '' : '/'}${customLogoUrl}`;
+  }
 
   let catalogHtml = '';
   if (pdfPath && pdfPath.trim()) {
@@ -96,7 +102,7 @@ function generateEmailHtml(textBody, pdfPath) {
               <table cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <img src="${logoUrl}" alt="Shree Ram Furniture Logo" width="70" height="70" style="display: block; border-radius: 12px; margin-bottom: 12px; border: 2px solid #d58564;" />
+                    <img src="${logoUrl}" alt="Shree Ram Furniture Logo" width="75" height="75" style="display: block; border-radius: 12px; margin-bottom: 12px; border: 2px solid #d58564; object-fit: contain; background-color: #ffffff; padding: 4px;" />
                   </td>
                 </tr>
                 <tr>
@@ -145,8 +151,38 @@ function generateEmailHtml(textBody, pdfPath) {
 </html>`;
 }
 
+// Helper to fetch PDF attachment content as base64 string
+async function getPdfBase64Attachment(pdfPath) {
+  if (!pdfPath || !pdfPath.trim()) return null;
+
+  try {
+    // Case A: Base64 data URI
+    if (pdfPath.startsWith('data:application/pdf;base64,')) {
+      return pdfPath.split(';base64,').pop();
+    }
+
+    // Case B: Remote URL (e.g. Cloudinary or HTTPS server)
+    if (pdfPath.startsWith('http://') || pdfPath.startsWith('https://')) {
+      const response = await fetch(pdfPath);
+      if (!response.ok) throw new Error(`HTTP ${response.status} fetching PDF from ${pdfPath}`);
+      const arrayBuf = await response.arrayBuffer();
+      return Buffer.from(arrayBuf).toString('base64');
+    }
+
+    // Case C: Local server file
+    const fullPath = path.resolve(__dirname, '..', pdfPath.replace(/^\//, ''));
+    if (fs.existsSync(fullPath)) {
+      const fileBuffer = fs.readFileSync(fullPath);
+      return fileBuffer.toString('base64');
+    }
+  } catch (err) {
+    console.warn('⚠️ PDF attachment resolution notice:', err.message);
+  }
+  return null;
+}
+
 // ── Email Helper ───────────────────────────────────────────────────────────
-async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
+async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath, logoUrl) {
   const brevoKey = (
     process.env.BREVO_API_KEY ||
     process.env.BREVO_KEY ||
@@ -158,7 +194,10 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
   console.log(`[Email] BREVO_API_KEY set: ${brevoKey ? 'YES (' + brevoKey.substring(0, 8) + '...)' : 'NO'}`);
 
   // Generate styled HTML email template
-  const htmlBody = generateEmailHtml(textBody, pdfPath);
+  const htmlBody = generateEmailHtml(textBody, pdfPath, logoUrl);
+
+  // Prepare PDF attachment content (handles local files + Cloudinary CDN URLs)
+  const pdfBase64 = await getPdfBase64Attachment(pdfPath);
 
   // ── PATH 1: Brevo HTTP API (Port 443 HTTPS — works 100% on Render) ────────
   if (brevoKey) {
@@ -179,21 +218,8 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
       textContent: textBody,
     };
 
-    // Attach PDF if configured
-    if (pdfPath && pdfPath.trim()) {
-      if (pdfPath.startsWith('data:application/pdf;base64,')) {
-        payload.attachment = [{ name: 'catalog.pdf', content: pdfPath.split(';base64,').pop() }];
-      } else {
-        const fullPath = path.resolve(__dirname, '..', pdfPath.replace(/^\//, ''));
-        if (fs.existsSync(fullPath)) {
-          try {
-            const fileBuffer = fs.readFileSync(fullPath);
-            payload.attachment = [{ name: 'catalog.pdf', content: fileBuffer.toString('base64') }];
-          } catch (readErr) {
-            console.warn('⚠️ PDF read error:', readErr.message);
-          }
-        }
-      }
+    if (pdfBase64) {
+      payload.attachment = [{ name: 'ShreeRamFurniture_Catalog.pdf', content: pdfBase64 }];
     }
 
     try {
@@ -257,15 +283,11 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
         html: htmlBody,
       };
 
-      if (pdfPath && pdfPath.trim()) {
-        if (pdfPath.startsWith('data:application/pdf;base64,')) {
-          mailOptions.attachments = [{ filename: 'catalog.pdf', content: Buffer.from(pdfPath.split(';base64,').pop(), 'base64') }];
-        } else {
-          const fullPath = path.resolve(__dirname, '..', pdfPath.replace(/^\//, ''));
-          if (fs.existsSync(fullPath)) {
-            mailOptions.attachments = [{ filename: 'catalog.pdf', path: fullPath }];
-          }
-        }
+      if (pdfBase64) {
+        mailOptions.attachments = [{
+          filename: 'ShreeRamFurniture_Catalog.pdf',
+          content: Buffer.from(pdfBase64, 'base64')
+        }];
       }
 
       const info = await transporter.sendMail(mailOptions);
@@ -302,6 +324,7 @@ router.post('/quotation', async (req, res) => {
         subject: 'Thank you for contacting Shree Ram Furniture!',
         body: 'Hello,\n\nThank you for reaching out to us. We have received your request for a custom furniture quotation.\n\nWe will get back to you shortly with our catalog and pricing.\n\nBest regards,\nShree Ram Furniture Team',
         pdfUrl: '',
+        logoUrl: '',
       });
     }
 
@@ -316,7 +339,7 @@ router.post('/quotation', async (req, res) => {
     }
 
     // Send email in background — never block the response
-    sendAutomatedEmail(email, config.subject, personalizedBody, config.pdfUrl)
+    sendAutomatedEmail(email, config.subject, personalizedBody, config.pdfUrl, config.logoUrl)
       .then((result) => {
         if (!result.success && result.error) {
           console.log('ℹ️ Background email notice:', result.error);
@@ -339,6 +362,7 @@ router.get('/config', protect, async (req, res) => {
         subject: 'Thank you for contacting Shree Ram Furniture!',
         body: 'Hello,\n\nThank you for reaching out to us. We have received your request for a custom furniture quotation.\n\nBest regards,\nShree Ram Furniture Team',
         pdfUrl: '',
+        logoUrl: '',
       });
     }
     res.json(config);
@@ -350,15 +374,21 @@ router.get('/config', protect, async (req, res) => {
 // @PUT /api/contact/config — update email config (admin)
 router.put('/config', protect, async (req, res) => {
   try {
-    const { subject, body, pdfUrl } = req.body;
+    const { subject, body, pdfUrl, logoUrl } = req.body;
     let config = await EmailConfig.findOne();
     if (!config) {
-      config = await EmailConfig.create({ subject: subject || '', body: body || '', pdfUrl: pdfUrl || '' });
+      config = await EmailConfig.create({
+        subject: subject || '',
+        body: body || '',
+        pdfUrl: pdfUrl || '',
+        logoUrl: logoUrl || ''
+      });
     } else {
       const updateData = {};
       if (subject !== undefined) updateData.subject = subject;
       if (body !== undefined) updateData.body = body;
       if (pdfUrl !== undefined) updateData.pdfUrl = pdfUrl;
+      if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
       config = await EmailConfig.findByIdAndUpdate(config._id, updateData, { new: true });
     }
     res.json(config);
@@ -405,10 +435,16 @@ router.get('/test-email', async (req, res) => {
   const brevoKey = (process.env.BREVO_API_KEY || process.env.BREVO_KEY || '').trim();
 
   try {
+    let config = await EmailConfig.findOne();
+    const pdfUrl = config?.pdfUrl || '';
+    const logoUrl = config?.logoUrl || '';
+
     const result = await sendAutomatedEmail(
       toEmail,
       'Shree Ram Furniture — Email Test',
-      'This is a test email to verify your email configuration is working correctly.'
+      'This is a test email to verify your email configuration is working correctly.',
+      pdfUrl,
+      logoUrl
     );
     res.json({
       status: result.success !== false ? 'success' : 'warning',
@@ -416,6 +452,8 @@ router.get('/test-email', async (req, res) => {
       brevoConfigured: !!brevoKey,
       brevoKeyPrefix: brevoKey ? brevoKey.substring(0, 8) + '...' : 'NOT SET',
       senderEmail: process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || 'not configured',
+      pdfUrl,
+      logoUrl,
       result,
     });
   } catch (error) {

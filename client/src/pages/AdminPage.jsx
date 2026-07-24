@@ -1416,10 +1416,11 @@ function QuotationsTab() {
 
 // ───────────────── Email Settings Tab ─────────────────
 function SettingsTab() {
-  const [config, setConfig] = useState({ subject: '', body: '', pdfUrl: '' });
+  const [config, setConfig] = useState({ subject: '', body: '', pdfUrl: '', logoUrl: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     async function loadConfig() {
@@ -1445,6 +1446,35 @@ function SettingsTab() {
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (PNG/JPG/SVG/WebP)');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('images', file);
+      const res = await uploadImages(formData);
+      const urls = res.data?.urls || res.urls || [];
+      if (!urls.length) throw new Error('No logo URL returned');
+      const logoUrl = urls[0];
+      const updatedConfig = { ...config, logoUrl };
+      await updateEmailConfig(updatedConfig);
+      setConfig(updatedConfig);
+      toast.success('Email Header Logo updated successfully!');
+    } catch (err) {
+      console.error('Logo upload error:', err);
+      toast.error(err?.response?.data?.message || 'Logo upload failed');
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = '';
     }
   };
 
@@ -1494,7 +1524,7 @@ function SettingsTab() {
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-white mb-2">Email Settings</h1>
-      <p className="text-gray-400 mb-8">Customize the automatic quotation email and PDF attachment catalog sent to users when they request quotes.</p>
+      <p className="text-gray-400 mb-8">Customize the automatic quotation email, header logo image, and PDF attachment catalog sent to clients.</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Settings Form */}
@@ -1530,44 +1560,95 @@ function SettingsTab() {
           </form>
         </div>
 
-        {/* PDF Attachment Card */}
-        <div className="admin-card bg-dark-800 border-dark-600/35 p-6 rounded-2xl flex flex-col justify-between text-left">
-          <div>
-            <h3 className="text-lg font-bold text-white mb-2">Brochure PDF Attachment</h3>
-            <p className="text-gray-400 text-xs leading-relaxed mb-6">
-              This PDF brochure/catalog will be attached to the automatic quotation reply email. Max size 25MB.
-            </p>
+        {/* Right Side Cards: Logo Image & PDF Attachment */}
+        <div className="space-y-6">
+          {/* Email Logo Card */}
+          <div className="admin-card bg-dark-800 border-dark-600/35 p-6 rounded-2xl flex flex-col justify-between text-left">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2">Header Email Logo</h3>
+              <p className="text-gray-400 text-xs leading-relaxed mb-4">
+                This logo image will appear at the top of all automated quotation emails sent to clients.
+              </p>
 
-            <div className="p-4 bg-dark-900 border border-dark-600/20 rounded-xl mb-4 text-center">
-              {config.pdfUrl ? (
-                <div>
-                  <p className="text-sm font-semibold text-gold-600 truncate mb-1">price.pdf</p>
-                  <a
-                    href={config.pdfUrl.startsWith('http') ? config.pdfUrl : config.pdfUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-gray-500 hover:text-dark-400 underline inline-block"
-                  >
-                    View Current PDF Catalog
-                  </a>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 italic">No PDF attached yet</p>
-              )}
+              <div className="p-4 bg-dark-900 border border-dark-600/20 rounded-xl mb-4 text-center flex flex-col items-center justify-center">
+                {config.logoUrl ? (
+                  <div>
+                    <img
+                      src={config.logoUrl}
+                      alt="Email Logo Preview"
+                      className="w-16 h-16 object-contain rounded-lg border border-gold-400/30 bg-white p-1 mb-2 mx-auto"
+                    />
+                    <a
+                      href={config.logoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-gold-500 hover:underline block truncate max-w-[200px]"
+                    >
+                      View Current Logo
+                    </a>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 italic mb-1">Using default website logo</p>
+                    <span className="text-[10px] text-gold-500 bg-gold-400/10 px-2 py-0.5 rounded">Default Active</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="btn-outline w-full justify-center py-2.5 rounded-xl cursor-pointer block text-center text-xs font-semibold uppercase tracking-wider">
+                {uploadingLogo ? 'Uploading Logo...' : 'Upload / Change Email Logo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  disabled={uploadingLogo}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
 
-          <div>
-            <label className="btn-outline w-full justify-center py-2.5 rounded-xl cursor-pointer block text-center text-xs font-semibold uppercase tracking-wider">
-              {uploadingPdf ? 'Uploading...' : 'Upload New Catalog PDF'}
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={handlePdfUpload}
-                disabled={uploadingPdf}
-                className="hidden"
-              />
-            </label>
+          {/* PDF Attachment Card */}
+          <div className="admin-card bg-dark-800 border-dark-600/35 p-6 rounded-2xl flex flex-col justify-between text-left">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-2">Brochure PDF Attachment</h3>
+              <p className="text-gray-400 text-xs leading-relaxed mb-4">
+                This PDF catalog will be attached to emails & downloadable via a button. Max size 25MB.
+              </p>
+
+              <div className="p-4 bg-dark-900 border border-dark-600/20 rounded-xl mb-4 text-center">
+                {config.pdfUrl ? (
+                  <div>
+                    <p className="text-sm font-semibold text-gold-600 truncate mb-1">Catalog PDF</p>
+                    <a
+                      href={config.pdfUrl.startsWith('http') ? config.pdfUrl : config.pdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-gold-500 hover:underline inline-block"
+                    >
+                      View Current PDF Catalog
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No PDF attached yet</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="btn-outline w-full justify-center py-2.5 rounded-xl cursor-pointer block text-center text-xs font-semibold uppercase tracking-wider">
+                {uploadingPdf ? 'Uploading PDF...' : 'Upload New Catalog PDF'}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfUpload}
+                  disabled={uploadingPdf}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
         </div>
       </div>
