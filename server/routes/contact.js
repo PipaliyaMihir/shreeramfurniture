@@ -32,9 +32,121 @@ const uploadPdf = multer({
   limits: { fileSize: 25 * 1024 * 1024 },
 });
 
+// Helper to generate fast-loading responsive HTML email layout with Logo -> Text -> Catalog -> Footer
+function generateEmailHtml(textBody, pdfPath) {
+  const paragraphs = textBody
+    ? textBody
+        .split('\n')
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0)
+        .map((p) => `<p style="margin:0 0 16px 0; line-height:1.75; color:#2e2724; font-size:15px;">${p}</p>`)
+        .join('')
+    : '<p style="margin:0 0 16px 0; line-height:1.75; color:#2e2724; font-size:15px;">Thank you for contacting Shree Ram Furniture!</p>';
+
+  const serverBaseUrl = (
+    process.env.SERVER_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    'https://shreeramfurniture.onrender.com'
+  ).replace(/\/$/, '');
+
+  const logoUrl = `${serverBaseUrl}/uploads/logo.png`;
+
+  let catalogHtml = '';
+  if (pdfPath && pdfPath.trim()) {
+    let downloadLink = pdfPath.startsWith('http')
+      ? pdfPath
+      : `${serverBaseUrl}${pdfPath.startsWith('/') ? '' : '/'}${pdfPath}`;
+
+    catalogHtml = `
+      <tr>
+        <td style="padding: 0 30px 30px 30px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #faf8f5; border: 1.5px dashed #d58564; border-radius: 12px; padding: 22px; text-align: center;">
+            <tr>
+              <td>
+                <div style="font-size: 32px; margin-bottom: 8px;">📄</div>
+                <h3 style="margin: 0 0 6px 0; color: #2e2724; font-size: 17px; font-weight: 700; font-family: Arial, sans-serif;">Catalog & Pricing Attached</h3>
+                <p style="margin: 0 0 16px 0; color: #75655e; font-size: 13px;">Find our catalog attached to this email or download it directly below:</p>
+                <a href="${downloadLink}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #d58564 0%, #c86a4b 100%); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 28px; border-radius: 8px; box-shadow: 0 4px 14px rgba(200,106,75,0.3); font-family: Arial, sans-serif;">
+                  📥 Download Price Catalog PDF
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shree Ram Furniture</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4efea; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2e2724;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4efea; padding: 40px 10px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 30px rgba(46,39,36,0.08); border: 1px solid #e5dcd3;">
+          
+          <!-- ── 1. LOGO & BRAND HEADER ── -->
+          <tr>
+            <td align="center" style="background-color: #2e2724; padding: 32px 20px; border-bottom: 4px solid #d58564;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <img src="${logoUrl}" alt="Shree Ram Furniture Logo" width="70" height="70" style="display: block; border-radius: 12px; margin-bottom: 12px; border: 2px solid #d58564;" />
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 1.5px; font-family: Arial, sans-serif;">
+                      SHREE RAM <span style="color: #d58564;">FURNITURE</span>
+                    </h1>
+                    <p style="margin: 4px 0 0 0; color: #c86a4b; font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; font-family: Arial, sans-serif;">
+                      Bespoke On-Site Carpentry & Custom Furniture
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ── 2. MESSAGE BODY TEXT ── -->
+          <tr>
+            <td style="padding: 35px 30px 20px 30px;">
+              ${paragraphs}
+            </td>
+          </tr>
+
+          <!-- ── 3. CATALOG & PRICE LIST SECTION ── -->
+          ${catalogHtml}
+
+          <!-- ── 4. FOOTER ── -->
+          <tr>
+            <td align="center" style="background-color: #2e2724; padding: 26px 20px; color: #a3958c; font-size: 12px; line-height: 1.6;">
+              <p style="margin: 0 0 6px 0; color: #ffffff; font-weight: 700; font-size: 14px; letter-spacing: 0.5px;">Shree Ram Furniture</p>
+              <p style="margin: 0 0 8px 0; color: #e2dcd0;">📍 Rajkot & Gondal, Gujarat, India</p>
+              <p style="margin: 0 0 14px 0; color: #d58564; font-size: 13px; font-weight: 600;">
+                📞 +91 99241 01181 &nbsp;|&nbsp; +91 99042 27279
+              </p>
+              <div style="border-top: 1px solid #423833; padding-top: 12px; margin-top: 10px;">
+                <p style="margin: 0; font-size: 11px; color: #7d6f66;">© ${new Date().getFullYear()} Shree Ram Furniture. All rights reserved.</p>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 // ── Email Helper ───────────────────────────────────────────────────────────
 async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
-  // Read Brevo API key — check all common env var names and strip quotes/spaces
   const brevoKey = (
     process.env.BREVO_API_KEY ||
     process.env.BREVO_KEY ||
@@ -44,6 +156,9 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
   ).trim().replace(/^["']|["']$/g, '');
 
   console.log(`[Email] BREVO_API_KEY set: ${brevoKey ? 'YES (' + brevoKey.substring(0, 8) + '...)' : 'NO'}`);
+
+  // Generate styled HTML email template
+  const htmlBody = generateEmailHtml(textBody, pdfPath);
 
   // ── PATH 1: Brevo HTTP API (Port 443 HTTPS — works 100% on Render) ────────
   if (brevoKey) {
@@ -60,6 +175,7 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
       sender: { name: 'Shree Ram Furniture', email: senderEmail },
       to: [{ email: toEmail }],
       subject,
+      htmlContent: htmlBody,
       textContent: textBody,
     };
 
@@ -105,7 +221,7 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
     }
   }
 
-  // ── PATH 2: SMTP via Nodemailer (resolves IPv4 explicitly to avoid ENETUNREACH) ──
+  // ── PATH 2: SMTP via Nodemailer ──────────────────────────────────────────
   const smtpUser = (process.env.SMTP_USER || '').trim();
   const smtpPass = (process.env.SMTP_PASS || '').trim();
 
@@ -113,7 +229,6 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
     const rawHost = (process.env.SMTP_HOST || 'smtp.gmail.com').trim();
     const targetPort = Number(process.env.SMTP_PORT) || 465;
 
-    // Resolve to explicit IPv4 address so Nodemailer never tries IPv6 on Render
     let resolvedHost = rawHost;
     try {
       const lookupResult = await dns.promises.lookup(rawHost, { family: 4 });
@@ -139,6 +254,7 @@ async function sendAutomatedEmail(toEmail, subject, textBody, pdfPath) {
         to: toEmail,
         subject,
         text: textBody,
+        html: htmlBody,
       };
 
       if (pdfPath && pdfPath.trim()) {

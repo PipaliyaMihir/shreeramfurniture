@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, X, Star, ExternalLink, Send, MessageSquare } from 'lucide-react';
+import {
+  ArrowLeft, ChevronLeft, ChevronRight, X, Star, ExternalLink,
+  Send, MessageSquare, ZoomIn, ZoomOut, RotateCcw
+} from 'lucide-react';
 import { getProduct, getProducts, rateProduct } from '../api';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -81,7 +84,6 @@ function ReviewForm({ projectId, onSubmitSuccess }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Name Input */}
       <div>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Your Name</p>
         <input
@@ -94,7 +96,6 @@ function ReviewForm({ projectId, onSubmitSuccess }) {
         />
       </div>
 
-      {/* Star selector */}
       <div>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Your Rating</p>
         <div className="flex gap-1.5" onMouseLeave={() => setHoverRating(0)}>
@@ -124,7 +125,6 @@ function ReviewForm({ projectId, onSubmitSuccess }) {
         </div>
       </div>
 
-      {/* Message */}
       <div>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Your Review</p>
         <textarea
@@ -196,7 +196,174 @@ function ReviewsList({ reviews = [] }) {
   );
 }
 
+// ── Enhanced Fullscreen Lightbox Modal ────────────────────
+function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onNext }) {
+  const [zoom, setZoom] = useState(1);
 
+  // Reset zoom whenever image index changes
+  useEffect(() => {
+    setZoom(1);
+  }, [currentIndex]);
+
+  const zoomIn = () => setZoom((prev) => Math.min(prev + 0.5, 4));
+  const zoomOut = () => setZoom((prev) => Math.max(prev - 0.5, 1));
+  const resetZoom = () => setZoom(1);
+
+  const toggleZoom = () => {
+    setZoom((prev) => (prev > 1 ? 1 : 2));
+  };
+
+  const handleWheel = (e) => {
+    if (e.deltaY < 0) {
+      zoomIn();
+    } else if (e.deltaY > 0) {
+      zoomOut();
+    }
+  };
+
+  // Keyboard navigation for Laptop / PC (Left/Right Arrow, Escape, +, -, r)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') onPrev();
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') onNext();
+      if (e.key === '+' || e.key === '=') zoomIn();
+      if (e.key === '-') zoomOut();
+      if (e.key === 'r' || e.key === 'R') resetZoom();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, onPrev, onNext]);
+
+  // Touch / Drag swipe handler for Left & Right slide
+  const handleDragEnd = (event, info) => {
+    if (zoom > 1) return; // don't slide to next image when zoomed in
+    const offset = info.offset.x;
+    const velocity = info.velocity.x;
+    if (offset < -50 || velocity < -300) {
+      onNext();
+    } else if (offset > 50 || velocity > 300) {
+      onPrev();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center select-none"
+      onClick={onClose}
+    >
+      {/* ── Top Control Bar ── */}
+      <div
+        className="absolute top-4 left-0 right-0 z-[110] px-4 md:px-8 flex items-center justify-between"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Counter Badge */}
+        <div className="text-white/90 text-xs md:text-sm font-display font-semibold bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/15">
+          {currentIndex + 1} / {images.length}
+        </div>
+
+        {/* Action Buttons: Zoom In, Zoom Out, Reset, Close */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={zoomIn}
+            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+            title="Zoom In (+)"
+          >
+            <ZoomIn size={18} />
+          </button>
+          <button
+            onClick={zoomOut}
+            disabled={zoom <= 1}
+            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200 disabled:opacity-40"
+            title="Zoom Out (-)"
+          >
+            <ZoomOut size={18} />
+          </button>
+          {zoom > 1 && (
+            <button
+              onClick={resetZoom}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+              title="Reset Zoom"
+            >
+              <RotateCcw size={18} />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-2.5 rounded-full bg-white/15 hover:bg-red-500/80 text-white transition-colors duration-200 ml-2"
+            title="Close (Esc)"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Left / Right Slide Arrow Buttons ── */}
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrev();
+            }}
+            className="absolute left-3 md:left-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-sm transition-all duration-200 active:scale-95 shadow-xl"
+            title="Previous (Left Arrow)"
+          >
+            <ChevronLeft size={30} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext();
+            }}
+            className="absolute right-3 md:right-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-sm transition-all duration-200 active:scale-95 shadow-xl"
+            title="Next (Right Arrow)"
+          >
+            <ChevronRight size={30} />
+          </button>
+        </>
+      )}
+
+      {/* ── Slide Image Container with Drag & Zoom ── */}
+      <div
+        className="w-full h-full flex items-center justify-center p-4 md:p-12 overflow-hidden"
+        onWheel={handleWheel}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <motion.div
+          key={currentIndex}
+          drag={zoom === 1 ? 'x' : true}
+          dragConstraints={
+            zoom === 1
+              ? { left: 0, right: 0 }
+              : { left: -400 * zoom, right: 400 * zoom, top: -400 * zoom, bottom: 400 * zoom }
+          }
+          dragElastic={zoom === 1 ? 0.2 : 0.05}
+          onDragEnd={handleDragEnd}
+          onDoubleClick={toggleZoom}
+          className="cursor-grab active:cursor-grabbing max-w-full max-h-full flex items-center justify-center"
+        >
+          <motion.img
+            src={images[currentIndex]}
+            alt={`${projectName} — Image ${currentIndex + 1}`}
+            animate={{ scale: zoom }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="max-w-[90vw] max-h-[82vh] object-contain rounded-2xl shadow-2xl pointer-events-none select-none"
+          />
+        </motion.div>
+      </div>
+
+      {/* Bottom hint for Laptop users */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[110] text-white/50 text-xs hidden md:block">
+        Use Left / Right Arrow keys to slide · Double-click or scroll to zoom
+      </div>
+    </motion.div>
+  );
+}
 
 function SkeletonPage() {
   return (
@@ -297,17 +464,6 @@ export default function ProjectDetailPage() {
   const goLightboxNext = useCallback(() => {
     setLightboxIndex((prev) => (prev === lightboxImages.length - 1 ? 0 : prev + 1));
   }, [lightboxImages.length]);
-
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    const handleKey = (e) => {
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowLeft') goLightboxPrev();
-      if (e.key === 'ArrowRight') goLightboxNext();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [lightboxOpen, closeLightbox, goLightboxPrev, goLightboxNext]);
 
   const relatedProjects = allProjects
     .filter((p) => (p._id || p.id) !== id)
@@ -416,7 +572,7 @@ export default function ProjectDetailPage() {
             {/* CTA Button below description */}
             <div className="mt-8">
               <a
-                href="/#contact"
+                href="/#contact-form"
                 className="btn-primary inline-flex items-center gap-2 py-3 px-6 text-base"
               >
                 <ExternalLink size={18} />
@@ -544,47 +700,14 @@ export default function ProjectDetailPage() {
       {/* ───── Fullscreen Lightbox ───── */}
       <AnimatePresence>
         {lightboxOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="lightbox-overlay"
-            onClick={closeLightbox}
-          >
-            <button
-              onClick={closeLightbox}
-              className="absolute top-4 right-4 md:top-6 md:right-6 z-[110] p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-            >
-              <X size={24} />
-            </button>
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 md:top-6 z-[110] text-white/70 text-sm font-display font-medium bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full">
-              {lightboxIndex + 1} / {lightboxImages.length}
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); goLightboxPrev(); }}
-              className="absolute left-2 md:left-6 z-[110] p-2 md:p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-            >
-              <ChevronLeft size={28} />
-            </button>
-            <motion.img
-              key={lightboxIndex}
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.92 }}
-              transition={{ duration: 0.25 }}
-              src={lightboxImages[lightboxIndex]}
-              alt={`${project.name} — Image ${lightboxIndex + 1}`}
-              className="max-w-[90vw] max-h-[85vh] object-contain rounded-2xl shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={(e) => { e.stopPropagation(); goLightboxNext(); }}
-              className="absolute right-2 md:right-6 z-[110] p-2 md:p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-            >
-              <ChevronRight size={28} />
-            </button>
-          </motion.div>
+          <LightboxModal
+            images={lightboxImages}
+            currentIndex={lightboxIndex}
+            projectName={project.name}
+            onClose={closeLightbox}
+            onPrev={goLightboxPrev}
+            onNext={goLightboxNext}
+          />
         )}
       </AnimatePresence>
 
