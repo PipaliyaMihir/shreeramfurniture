@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 
 const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET || 'ShreeRamFurniture_SuperSecret_JWT_2024_Key_Fallback', { expiresIn: '7d' });
+  jwt.sign({ id }, process.env.JWT_SECRET || 'ShreeRamFurniture_SuperSecret_JWT_2024_Key_Fallback', { expiresIn: '1d' });
 
 // @POST /api/auth/login
 router.post('/login', async (req, res) => {
@@ -21,20 +20,21 @@ router.post('/login', async (req, res) => {
 
     let user = await User.findOne({ email: cleanEmail });
 
-    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com').trim().toLowerCase();
-    const adminPassword = (process.env.ADMIN_PASSWORD || 'Admin@123').trim();
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
 
-    // Auto-create default admin if it doesn't exist and credentials match
-    if (!user && cleanEmail === adminEmail && cleanPassword === adminPassword) {
+    // Auto-create admin user from env vars if no user exists with this email yet
+    if (!user && adminEmail && adminPassword && cleanEmail === adminEmail && cleanPassword === adminPassword) {
       user = await User.create({
         name: 'Shree Ram Admin',
         email: adminEmail,
         password: adminPassword,
         role: 'admin',
       });
-      console.log('💡 Auto-created default admin user on first login attempt.');
+      console.log('💡 Auto-created admin user from environment variables.');
     }
 
+    // Verify user password against database
     if (user && (await user.matchPassword(cleanPassword))) {
       res.json({
         _id: user._id,

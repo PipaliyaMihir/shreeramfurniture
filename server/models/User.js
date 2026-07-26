@@ -24,14 +24,19 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 const UserModel = mongoose.model('User', userSchema);
 const { wrapModel } = require('../utils/dbFallback');
 
-const defaultUsers = [
-  {
-    _id: '60c72b2f9b1d8a23c4d5e6f7',
-    name: 'Shree Ram Admin',
-    email: 'admin@shreeramfurniture.com',
-    password: '$2b$10$5yllI94CO/nIxQr0870DOe/wBv5W2L4hjK8FyH2QeVdAmNQyuA2DK', // bcrypt of Admin@123
-    role: 'admin',
-  }
-];
+const adminEmail = (process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com').trim().toLowerCase();
+const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
+
+const defaultUsers = adminPassword
+  ? [
+      {
+        _id: '60c72b2f9b1d8a23c4d5e6f7',
+        name: 'Shree Ram Admin',
+        email: adminEmail,
+        password: bcrypt.hashSync(adminPassword, 10),
+        role: 'admin',
+      },
+    ]
+  : [];
 
 module.exports = wrapModel(UserModel, 'User', defaultUsers);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
@@ -10,8 +10,13 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Whenever the login page mounts or user navigates back to /admin/login, clear previous session!
+  useEffect(() => {
+    logout();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +26,7 @@ export default function AdminLoginPage() {
       toast.success('Welcome back, Admin!');
       navigate('/admin');
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Invalid credentials. Please try again.');
+      toast.error(err?.response?.data?.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -91,7 +96,7 @@ export default function AdminLoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@shreeramfurniture.com"
+                    placeholder="Enter admin email..."
                     className="input-field pl-11"
                   />
                 </div>

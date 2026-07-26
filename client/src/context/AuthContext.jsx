@@ -1,18 +1,18 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { login as loginAPI, registerUser as registerAPI } from '../api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // ── Admin auth — localStorage so refresh doesn't log out ────────────────
+  // ── Admin auth — stored in sessionStorage so closing tab / browser logs out ──────
   const [user, setUser] = useState(() => {
     try {
-      const u = localStorage.getItem('srf_user');
+      const u = sessionStorage.getItem('srf_user') || localStorage.getItem('srf_user');
       return u ? JSON.parse(u) : null;
     } catch { return null; }
   });
 
-  // ── Public user auth — localStorage so refresh doesn't log out ──────────
+  // ── Public user auth — stored in localStorage ──────────────────────
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const u = localStorage.getItem('srf_public_user');
@@ -20,21 +20,26 @@ export const AuthProvider = ({ children }) => {
     } catch { return null; }
   });
 
-  // Admin login
+  // Admin login — stores token in sessionStorage (erased when tab closes)
   const login = async (email, password) => {
     const res = await loginAPI({ email, password });
     const userData = res.data;
     if (userData.role !== 'admin' && userData.role !== 'superadmin') {
       throw new Error('Not authorized as admin');
     }
-    localStorage.setItem('srf_token', userData.token);
-    localStorage.setItem('srf_user', JSON.stringify(userData));
+    sessionStorage.setItem('srf_token', userData.token);
+    sessionStorage.setItem('srf_user', JSON.stringify(userData));
+    // Clear any legacy localStorage to ensure clean session-only auth
+    localStorage.removeItem('srf_token');
+    localStorage.removeItem('srf_user');
     setUser(userData);
     return userData;
   };
 
-  // Admin logout
+  // Admin logout — clears all session & local storage
   const logout = () => {
+    sessionStorage.removeItem('srf_token');
+    sessionStorage.removeItem('srf_user');
     localStorage.removeItem('srf_token');
     localStorage.removeItem('srf_user');
     setUser(null);
