@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -28,9 +28,9 @@ function StarRating({ rating = 4.5, size = 18 }) {
           className={
             i <= Math.floor(rating)
               ? 'fill-amber-400 text-amber-400'
-              : i - 0.5 <= rating
-                ? 'fill-amber-400/50 text-amber-400'
-                : 'fill-gray-600 text-gray-600'
+              : i - rating < 1 && i - rating > 0
+              ? 'fill-amber-400/50 text-amber-400'
+              : 'fill-gray-600 text-gray-600'
           }
         />
       ))}
@@ -39,113 +39,89 @@ function StarRating({ rating = 4.5, size = 18 }) {
   );
 }
 
-// ── Review Form ──────────────────────────────────────────
+// ── Review Form Component ──────────────────────────────────────────
 function ReviewForm({ projectId, onSubmitSuccess }) {
   const [name, setName] = useState('');
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
+  const [rating, setRating] = useState(5);
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) { toast.error('Please enter your name'); return; }
-    if (!rating) { toast.error('Please select a star rating'); return; }
-    if (!message.trim()) { toast.error('Please write a review message'); return; }
+    if (!name.trim() || !message.trim()) {
+      toast.error('Please fill in both your name and review message');
+      return;
+    }
     setSubmitting(true);
     try {
-      const res = await rateProduct(projectId, {
-        rating,
-        name: name.trim(),
-        message: message.trim(),
-      });
-      toast.success(`Thank you, ${name.trim()}! Your review has been submitted.`);
-      setSubmitted(true);
-      if (onSubmitSuccess) onSubmitSuccess(res.data);
+      const res = await rateProduct(projectId, { name, rating, message });
+      toast.success('Thank you! Your review has been submitted.');
+      setName('');
+      setMessage('');
+      setRating(5);
+      if (onSubmitSuccess && res.data) {
+        onSubmitSuccess(res.data);
+      }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to submit review.');
+      toast.error(err?.response?.data?.message || 'Error submitting review');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (submitted) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-6 text-center">
-        <div className="w-12 h-12 bg-green-500/15 rounded-full flex items-center justify-center">
-          <Star size={22} className="fill-green-400 text-green-400" />
-        </div>
-        <p className="text-green-400 font-semibold font-display">Review Submitted!</p>
-        <p className="text-xs text-gray-500">Thank you, {name.trim()}. Your review helps others.</p>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 text-left">
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Your Name</p>
+        <label className="block text-xs font-semibold text-gray-400 mb-1">Your Rating *</label>
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              type="button"
+              key={star}
+              onClick={() => setRating(star)}
+              className="p-1 hover:scale-110 transition-transform"
+            >
+              <Star
+                size={22}
+                className={star <= rating ? 'fill-amber-400 text-amber-400' : 'fill-gray-600 text-gray-600'}
+              />
+            </button>
+          ))}
+          <span className="text-xs text-amber-400 font-bold ml-2">{rating} / 5</span>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-semibold text-gray-400 mb-1">Your Name *</label>
         <input
+          required
           type="text"
-          placeholder="Enter your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="input-field-dark text-sm w-full"
-          required
+          placeholder="e.g. Ramesh Patel"
+          className="input-field text-sm"
         />
       </div>
 
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Your Rating</p>
-        <div className="flex gap-1.5" onMouseLeave={() => setHoverRating(0)}>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setRating(i)}
-              onMouseEnter={() => setHoverRating(i)}
-              className="focus:outline-none transition-transform duration-150 active:scale-90"
-            >
-              <Star
-                size={28}
-                className={`transition-colors duration-150 ${i <= (hoverRating || rating)
-                  ? 'fill-gold-400 text-gold-400'
-                  : 'fill-transparent text-gray-500 hover:text-gold-300'
-                  }`}
-              />
-            </button>
-          ))}
-          {rating > 0 && (
-            <span className="self-center ml-2 text-xs text-gold-400 font-semibold">
-              {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][rating]}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Your Review</p>
+        <label className="block text-xs font-semibold text-gray-400 mb-1">Your Review *</label>
         <textarea
+          required
+          rows={3}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          rows={3}
-          placeholder="Share your experience with this project..."
-          className="input-field-dark resize-none text-sm"
-          required
+          placeholder="Share your experience with our interior design & woodwork..."
+          className="input-field text-sm resize-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={submitting}
-        className="w-full btn-primary justify-center py-3 text-sm disabled:opacity-70"
+        className="btn-primary w-full justify-center py-2.5 text-xs font-semibold uppercase tracking-wider disabled:opacity-70"
       >
         {submitting ? (
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Submitting...
-          </div>
+          'Submitting...'
         ) : (
           <div className="flex items-center gap-2 justify-center">
             <Send size={14} />
@@ -195,10 +171,11 @@ function ReviewsList({ reviews = [] }) {
   );
 }
 
-// ── Enhanced Fullscreen Lightbox Modal ────────────────────
+// ── Fullscreen Lightbox Modal ──────────────────────────────────────────────
 function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onNext }) {
   const [zoom, setZoom] = useState(1);
   const [resetKey, setResetKey] = useState(0);
+  const containerRef = useRef(null);
 
   // Reset zoom and position whenever image index changes
   useEffect(() => {
@@ -209,7 +186,6 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
   const zoomIn = () => setZoom((prev) => Math.min(prev + 0.5, 4));
   const zoomOut = () => setZoom((prev) => Math.max(prev - 0.5, 1));
 
-  // Restart / Reset button resets image size to 1x and position back to center (0,0)
   const resetZoomAndPosition = () => {
     setZoom(1);
     setResetKey((prev) => prev + 1);
@@ -223,6 +199,14 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
     }
   };
 
+  const handlePrev = () => {
+    onPrev();
+  };
+
+  const handleNext = () => {
+    onNext();
+  };
+
   const handleWheel = (e) => {
     if (e.deltaY < 0) {
       zoomIn();
@@ -231,15 +215,15 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
     }
   };
 
-  // Keyboard navigation for Laptop / PC (Left/Right Arrow, Escape, +, -, r)
+  // Keyboard navigation for Laptop / PC
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-        if (currentIndex > 0) onPrev();
+        if (currentIndex > 0) handlePrev();
       }
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-        if (currentIndex < images.length - 1) onNext();
+        if (currentIndex < images.length - 1) handleNext();
       }
       if (e.key === '+' || e.key === '=') zoomIn();
       if (e.key === '-') zoomOut();
@@ -247,67 +231,61 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, onPrev, onNext, currentIndex, images.length]);
+  }, [onClose, currentIndex, images.length]);
 
-  // Touch / Drag swipe handler for Left & Right slide
+  // Touch / Drag swipe handler for Left & Right slide on mobile and laptop
   const handleDragEnd = (event, info) => {
-    if (zoom > 1) return; // don't slide to next image when zoomed in
+    if (zoom > 1) return; // don't slide when zoomed in
     const offset = info.offset.x;
     const velocity = info.velocity.x;
-    if (offset < -50 || velocity < -300) {
-      if (currentIndex < images.length - 1) onNext();
-    } else if (offset > 50 || velocity > 300) {
-      if (currentIndex > 0) onPrev();
+    if (offset < -40 || velocity < -250) {
+      if (currentIndex < images.length - 1) handleNext();
+    } else if (offset > 40 || velocity > 250) {
+      if (currentIndex > 0) handlePrev();
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center select-none"
+    <div
+      className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center select-none"
       onClick={onClose}
     >
-      {/* ── Top Control Bar ── */}
+      {/* ── Top Bar ── */}
       <div
         className="absolute top-4 left-0 right-0 z-[110] px-4 md:px-8 flex items-center justify-between"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Counter Badge */}
-        <div className="text-white/90 text-xs md:text-sm font-display font-semibold bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/15">
+        <div className="text-white/90 text-xs md:text-sm font-display font-semibold bg-white/10 px-4 py-1.5 rounded-full border border-white/15 shadow-lg">
           {currentIndex + 1} / {images.length}
         </div>
 
-        {/* Action Buttons: Zoom & Reset hidden on mobile (use two-finger pinch zoom), visible on Laptop/Desktop (md:flex) */}
-        <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={zoomIn}
-              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-              title="Zoom In (+)"
-            >
-              <ZoomIn size={18} />
-            </button>
-            <button
-              onClick={zoomOut}
-              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-              title="Zoom Out (-)"
-            >
-              <ZoomOut size={18} />
-            </button>
-            <button
-              onClick={resetZoomAndPosition}
-              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
-              title="Restart / Reset Original Size & Position (R)"
-            >
-              <RotateCcw size={18} />
-            </button>
-          </div>
+        {/* Action Buttons: Zoom In (+), Zoom Out (-), Restart (Reset), Close (X) */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            onClick={zoomIn}
+            className="p-2 sm:p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+            title="Zoom In (+)"
+          >
+            <ZoomIn size={18} />
+          </button>
+          <button
+            onClick={zoomOut}
+            className="p-2 sm:p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+            title="Zoom Out (-)"
+          >
+            <ZoomOut size={18} />
+          </button>
+          <button
+            onClick={resetZoomAndPosition}
+            className="p-2 sm:p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors duration-200"
+            title="Restart / Reset Original Size & Position (R)"
+          >
+            <RotateCcw size={18} />
+          </button>
           <button
             onClick={onClose}
-            className="p-2.5 rounded-full bg-white/15 hover:bg-red-500/80 text-white transition-colors duration-200 ml-1"
+            className="p-2 sm:p-2.5 rounded-full bg-white/15 hover:bg-red-500/80 text-white transition-colors duration-200 ml-1 shadow-lg"
             title="Close (Esc)"
           >
             <X size={20} />
@@ -320,9 +298,9 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onPrev();
+            handlePrev();
           }}
-          className="hidden md:flex absolute left-4 md:left-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-sm transition-all duration-200 active:scale-95 shadow-xl items-center justify-center"
+          className="hidden md:flex absolute left-4 md:left-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all duration-200 active:scale-95 shadow-xl items-center justify-center"
           title="Previous (Left Arrow)"
         >
           <ChevronLeft size={30} />
@@ -333,40 +311,50 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onNext();
+            handleNext();
           }}
-          className="hidden md:flex absolute right-4 md:right-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white backdrop-blur-sm transition-all duration-200 active:scale-95 shadow-xl items-center justify-center"
+          className="hidden md:flex absolute right-4 md:right-8 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all duration-200 active:scale-95 shadow-xl items-center justify-center"
           title="Next (Right Arrow)"
         >
           <ChevronRight size={30} />
         </button>
       )}
 
-      {/* ── Slide Image Container with Drag & Zoom ── */}
+      {/* ── Slide Image Container with Drag & Bounded Zoom Panning ── */}
       <div
-        className="w-full h-full flex items-center justify-center p-4 md:p-12 overflow-hidden"
+        ref={containerRef}
+        className="w-full h-full flex items-center justify-center p-2 sm:p-4 md:p-12 overflow-hidden"
         onWheel={handleWheel}
         onClick={(e) => e.stopPropagation()}
       >
         <motion.div
           key={`${currentIndex}-${resetKey}`}
+          initial={{ opacity: 0.85 }}
+          animate={{ opacity: 1, scale: zoom }}
+          transition={{
+            scale: { type: 'spring', stiffness: 300, damping: 28 },
+            opacity: { duration: 0.12 }
+          }}
           drag={zoom === 1 ? 'x' : true}
           dragConstraints={
             zoom === 1
               ? { left: 0, right: 0 }
-              : { left: -400 * zoom, right: 400 * zoom, top: -400 * zoom, bottom: 400 * zoom }
+              : {
+                  left: -((typeof window !== 'undefined' ? window.innerWidth : 800) * (zoom - 0.95)) / 2,
+                  right: ((typeof window !== 'undefined' ? window.innerWidth : 800) * (zoom - 0.95)) / 2,
+                  top: -((typeof window !== 'undefined' ? window.innerHeight : 600) * (zoom - 0.95)) / 2,
+                  bottom: ((typeof window !== 'undefined' ? window.innerHeight : 600) * (zoom - 0.95)) / 2,
+                }
           }
           dragElastic={zoom === 1 ? 0.2 : 0.05}
           onDragEnd={handleDragEnd}
           onDoubleClick={toggleZoom}
-          className="cursor-grab active:cursor-grabbing max-w-full max-h-full flex items-center justify-center"
+          className="cursor-grab active:cursor-grabbing max-w-full max-h-full flex items-center justify-center touch-pan-y"
         >
-          <motion.img
+          <img
             src={images[currentIndex]}
             alt={`${projectName} — Image ${currentIndex + 1}`}
-            animate={{ scale: zoom }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="max-w-[90vw] max-h-[82vh] object-contain rounded-2xl shadow-2xl pointer-events-none select-none"
+            className="max-w-[95vw] sm:max-w-[90vw] max-h-[85vh] sm:max-h-[82vh] object-contain rounded-2xl shadow-2xl pointer-events-none select-none"
           />
         </motion.div>
       </div>
@@ -375,7 +363,7 @@ function LightboxModal({ images, currentIndex, projectName, onClose, onPrev, onN
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[110] text-white/50 text-xs hidden md:block">
         Use Left / Right Arrow keys to slide · Double-click or scroll to zoom
       </div>
-    </motion.div>
+    </div>
   );
 }
 
