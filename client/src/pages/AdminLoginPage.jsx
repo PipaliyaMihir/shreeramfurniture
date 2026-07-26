@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
   const { login, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Whenever the login page mounts or user navigates back to /admin/login, clear previous session!
+  // Clear any existing session when landing on the login page
   useEffect(() => {
     logout();
   }, []);
@@ -26,7 +26,7 @@ export default function AdminLoginPage() {
       toast.success('Welcome back, Admin!');
       navigate('/admin');
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Invalid email or password. Please try again.');
+      toast.error(err?.response?.data?.message || 'Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -80,10 +80,10 @@ export default function AdminLoginPage() {
           <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Email Field */}
+              {/* Email / Username Field */}
               <div className="space-y-2">
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest text-left">
-                  Email Address
+                  Username or Email
                 </label>
                 <div className="relative group">
                   <Mail
@@ -92,11 +92,11 @@ export default function AdminLoginPage() {
                   />
                   <input
                     id="admin-email"
-                    type="email"
+                    type="text"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter admin email..."
+                    placeholder="Username or admin email"
                     className="input-field pl-11"
                   />
                 </div>

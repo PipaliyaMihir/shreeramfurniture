@@ -7,7 +7,9 @@
     "ctaLink": "#products",
     "order": 1,
     "active": true,
-    "updatedAt": "2026-06-20T05:08:48.976Z"
+    "updatedAt": "2026-06-20T05:08:48.976Z",
+    "_id": "fed4c34176d797d2d74c47f2",
+    "createdAt": "2026-07-26T07:13:10.738Z"
   },
   {
     "title": "Modern Modular\nKitchen Solutions",
@@ -16,7 +18,10 @@
     "ctaText": "Explore Work",
     "ctaLink": "#products",
     "order": 2,
-    "active": true
+    "active": true,
+    "_id": "c8c0ef2c61680b8e3fea3d60",
+    "createdAt": "2026-07-26T07:13:10.738Z",
+    "updatedAt": "2026-07-26T07:13:10.738Z"
   },
   {
     "title": "Bespoke Custom\nFurniture & Carpentry",
@@ -25,6 +30,9 @@
     "ctaText": "See Portfolio",
     "ctaLink": "#products",
     "order": 3,
-    "active": true
+    "active": true,
+    "_id": "cd4f97916f943c2bc2f3e356",
+    "createdAt": "2026-07-26T07:13:10.738Z",
+    "updatedAt": "2026-07-26T07:13:10.738Z"
   }
 ]

@@ -7,12 +7,14 @@ const API = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach token to requests — admin token takes priority, then user token
+// Attach token to requests — check sessionStorage first, then localStorage
 API.interceptors.request.use((config) => {
-  const adminToken = localStorage.getItem('srf_token');
-  const userToken = localStorage.getItem('srf_user_token');
+  const adminToken = sessionStorage.getItem('srf_token') || localStorage.getItem('srf_token');
+  const userToken = sessionStorage.getItem('srf_user_token') || localStorage.getItem('srf_user_token');
   const token = adminToken || userToken;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -23,12 +25,15 @@ API.interceptors.response.use(
     const url = err.config?.url || '';
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
     if (err.response?.status === 401 && !isAuthEndpoint) {
-      // Only clear if admin was the one that got a 401 on a protected route
-      const adminToken = localStorage.getItem('srf_token');
+      const adminToken = sessionStorage.getItem('srf_token') || localStorage.getItem('srf_token');
       if (adminToken) {
+        sessionStorage.removeItem('srf_token');
+        sessionStorage.removeItem('srf_user');
         localStorage.removeItem('srf_token');
         localStorage.removeItem('srf_user');
-        window.location.href = '/admin/login';
+        if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+          window.location.href = '/admin/login';
+        }
       }
     }
     return Promise.reject(err);

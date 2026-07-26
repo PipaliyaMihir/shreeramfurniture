@@ -4,7 +4,7 @@ import { login as loginAPI, registerUser as registerAPI } from '../api';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // ── Admin auth — stored in sessionStorage so closing tab / browser logs out ──────
+  // ── Admin auth — check sessionStorage first, then localStorage ───────────
   const [user, setUser] = useState(() => {
     try {
       const u = sessionStorage.getItem('srf_user') || localStorage.getItem('srf_user');
@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
     } catch { return null; }
   });
 
-  // ── Public user auth — stored in localStorage ──────────────────────
+  // ── Public user auth ─────────────────────────────────────────────────────
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const u = localStorage.getItem('srf_public_user');
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     } catch { return null; }
   });
 
-  // Admin login — stores token in sessionStorage (erased when tab closes)
+  // Admin login
   const login = async (email, password) => {
     const res = await loginAPI({ email, password });
     const userData = res.data;
@@ -29,14 +29,13 @@ export const AuthProvider = ({ children }) => {
     }
     sessionStorage.setItem('srf_token', userData.token);
     sessionStorage.setItem('srf_user', JSON.stringify(userData));
-    // Clear any legacy localStorage to ensure clean session-only auth
-    localStorage.removeItem('srf_token');
-    localStorage.removeItem('srf_user');
+    localStorage.setItem('srf_token', userData.token);
+    localStorage.setItem('srf_user', JSON.stringify(userData));
     setUser(userData);
     return userData;
   };
 
-  // Admin logout — clears all session & local storage
+  // Admin logout
   const logout = () => {
     sessionStorage.removeItem('srf_token');
     sessionStorage.removeItem('srf_user');

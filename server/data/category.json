@@ -4,41 +4,59 @@
     "slug": "kitchen",
     "icon": "🍳",
     "description": "Modern modular kitchens",
-    "order": 1
+    "order": 1,
+    "_id": "b8ad35642b24c2562cb58046",
+    "createdAt": "2026-07-26T07:13:10.778Z",
+    "updatedAt": "2026-07-26T07:13:10.778Z"
   },
   {
     "name": "Bedroom",
     "slug": "bedroom",
     "icon": "🛏️",
     "description": "Luxurious bedroom designs",
-    "order": 2
+    "order": 2,
+    "_id": "6696aca2dfd187c6b9bfcaa3",
+    "createdAt": "2026-07-26T07:13:10.778Z",
+    "updatedAt": "2026-07-26T07:13:10.778Z"
   },
   {
     "name": "Living Area",
     "slug": "living-area",
     "icon": "🛋️",
     "description": "Beautiful living room designs",
-    "order": 3
+    "order": 3,
+    "_id": "e79c03bf5155080683c38c3e",
+    "createdAt": "2026-07-26T07:13:10.778Z",
+    "updatedAt": "2026-07-26T07:13:10.778Z"
   },
   {
     "name": "TV Unit",
     "slug": "tv-unit",
     "icon": "📺",
     "description": "Custom TV units and panels",
-    "order": 4
+    "order": 4,
+    "_id": "08afb1da65a4e9d77aac1707",
+    "createdAt": "2026-07-26T07:13:10.778Z",
+    "updatedAt": "2026-07-26T07:13:10.778Z"
   },
   {
     "name": "Dining",
     "slug": "dining",
     "icon": "🍽️",
     "description": "Elegant dining rooms",
-    "order": 5
+    "order": 5,
+    "_id": "3f5dce8bdb46b51a2c875efb",
+    "createdAt": "2026-07-26T07:13:10.778Z",
+    "updatedAt": "2026-07-26T07:13:10.778Z"
   },
   {
     "name": "Office",
     "slug": "office",
     "icon": "💼",
     "description": "Modern home office workspaces",
-    "order": 6
+    "order": 6,
+    "_id": "e8a3157fcdc184decefa4eaa",
+    "createdAt": "2026-07-26T07:13:10.778Z",
+    "updatedAt": "2026-07-26T07:13:10.778Z"
   }
 ]

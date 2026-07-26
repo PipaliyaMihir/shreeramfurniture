@@ -1,51 +1,87 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 
 const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET || 'ShreeRamFurniture_SuperSecret_JWT_2024_Key_Fallback', { expiresIn: '1d' });
+  jwt.sign({ id }, process.env.JWT_SECRET || 'ShreeRamFurniture_SuperSecret_JWT_2024_Key_Fallback', { expiresIn: '7d' });
 
 // @POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({ message: 'Email/Username and password are required' });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanInput = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 
-    let user = await User.findOne({ email: cleanEmail });
+    // Environment variable admin credentials
+    const envAdminEmail = (process.env.ADMIN_EMAIL || 'admin@shreeramfurniture.com').trim().toLowerCase();
+    const envAdminUsername = (process.env.ADMIN_USERNAME || envAdminEmail.split('@')[0] || 'admin').trim().toLowerCase();
+    const envAdminPassword = (process.env.ADMIN_PASSWORD || 'Admin@123').trim();
 
-    const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-    const adminPassword = (process.env.ADMIN_PASSWORD || '').trim();
+    const isEnvAdminAttempt = (
+      cleanInput === envAdminEmail ||
+      cleanInput === envAdminUsername ||
+      cleanInput === 'admin' ||
+      cleanInput === 'admin@shreeramfurniture.com'
+    );
 
-    // Auto-create admin user from env vars if no user exists with this email yet
-    if (!user && adminEmail && adminPassword && cleanEmail === adminEmail && cleanPassword === adminPassword) {
-      user = await User.create({
-        name: 'Shree Ram Admin',
-        email: adminEmail,
-        password: adminPassword,
-        role: 'admin',
+    // 1. Check process.env Admin Credentials
+    if (isEnvAdminAttempt && cleanPassword === envAdminPassword) {
+      let adminUser = await User.findOne({
+        $or: [
+          { email: envAdminEmail },
+          { email: 'admin@shreeramfurniture.com' },
+          { role: 'admin' }
+        ]
       });
-      console.log('💡 Auto-created admin user from environment variables.');
+
+      if (!adminUser) {
+        adminUser = await User.create({
+          name: 'Shree Ram Admin',
+          email: envAdminEmail,
+          password: envAdminPassword,
+          role: 'admin',
+        });
+      } else {
+        adminUser.email = envAdminEmail;
+        adminUser.password = envAdminPassword;
+        await adminUser.save();
+      }
+
+      return res.json({
+        _id: adminUser._id,
+        name: adminUser.name,
+        email: adminUser.email,
+        role: adminUser.role,
+        token: generateToken(adminUser._id),
+      });
     }
 
-    // Verify user password against database
+    // 2. Check Database User
+    const user = await User.findOne({
+      $or: [
+        { email: cleanInput },
+        { name: new RegExp(`^${cleanInput}$`, 'i') }
+      ]
+    });
+
     if (user && (await user.matchPassword(cleanPassword))) {
-      res.json({
+      return res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
         token: generateToken(user._id),
       });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
     }
+
+    return res.status(401).json({ message: 'Invalid email/username or password' });
   } catch (error) {
     console.error('❌ Login error details:', error);
     res.status(500).json({ message: error.message });
